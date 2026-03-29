@@ -1,0 +1,69 @@
+name: DecisionSimEnv
+version: "1.0.0"
+description: >
+  Universal Decision Stress-Tester. Anyone — a founder, student, investor,
+  or individual — enters a situation or decision. The AI simulates reality
+  to find every flaw, map every possible outcome, and give a final verdict.
+author: Raghav Agarwal
+tags:
+  - openenv
+  - decision-making
+  - simulation
+  - business
+  - personal
+
+tasks:
+  - id: task1_autopsy
+    name: Idea Autopsy
+    difficulty: easy
+    description: >
+      AI reads the user's situation, extracts their goal profile, finds
+      weaknesses, names real competitors who tried something similar,
+      and identifies the single biggest blind spot.
+    max_steps: 1
+    score_range: [0.0, 1.0]
+
+  - id: task2_scenarios
+    name: Scenario Mapping
+    difficulty: medium
+    description: >
+      AI maps 5 realistic future scenarios with probability estimates,
+      covering best case, worst case, unexpected events, and hidden paths.
+      Each scenario is checked against the user's actual goals.
+    max_steps: 1
+    score_range: [0.0, 1.0]
+
+  - id: task3_simulation
+    name: Future Path Simulator
+    difficulty: hard
+    description: >
+      AI simulates the chosen path month by month for 12 months, surfaces
+      unexpected consequences, compares all paths, and gives one clear
+      final recommendation tied to the user's specific goals.
+    max_steps: 3
+    score_range: [0.0, 1.0]
+
+observation_space:
+  type: text
+  fields:
+    - task_id
+    - user_input
+    - goal_profile
+    - current_step
+    - max_steps
+    - previous_analysis
+    - instructions
+
+action_space:
+  type: text
+  fields:
+    - analysis
+    - chosen_path
+
+reward:
+  type: float
+  range: [0.0, 1.0]
+  partial_credit: true
+  description: >
+    Multi-criteria scoring. Partial scores given at every step.
+    Final episode score is the weighted average across all steps.
