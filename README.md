@@ -1,3 +1,15 @@
+---
+title: DecisionSimEnv
+emoji: 🧠
+colorFrom: blue
+colorTo: purple
+sdk: docker
+pinned: false
+license: mit
+short_description: Universal Decision Stress-Tester for the OpenEnv Hackathon
+---
+
+
 # DecisionSimEnv
 ### Universal Decision Stress-Tester
 
