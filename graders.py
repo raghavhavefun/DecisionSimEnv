@@ -83,9 +83,22 @@ def score_task2(analysis: str) -> Dict:
     text = analysis.lower()
     breakdown = {}
 
-    scenario_count = len(re.findall(
-        r'scenario\s+[a-e]|scenario\s+\d|scenario:', text
-    ))
+    # Flexible scenario detection
+    scenario_patterns = [
+        r'scenario\s+[a-e]',
+        r'scenario\s+\d',
+        r'scenario:',
+        r'\d+\.\s+(?:the\s+)?\w+\s+(?:path|scenario|case|future|outcome)',
+        r'path\s+[a-e1-5]',
+        r'^\s*\d+[\.\)]\s+\*{0,2}(?:the\s+)?\w+',
+    ]
+    scenario_count = 0
+    for pattern in scenario_patterns:
+        matches = re.findall(pattern, text, re.MULTILINE)
+        scenario_count = max(scenario_count, len(matches))
+    # Count by probability blocks as fallback
+    prob_blocks = len(re.findall(r'\d+\s*%', text))
+    scenario_count = max(scenario_count, min(prob_blocks, 7))
     breakdown["scenario_count"] = round(min(scenario_count / 5, 1.0), 2)
 
     probability_matches = re.findall(r'\d+\s*%', text)
@@ -100,10 +113,14 @@ def score_task2(analysis: str) -> Dict:
         prob_sum_ok = False
     breakdown["probabilities_sum_correctly"] = 1.0 if prob_sum_ok else 0.0
 
-    has_best = any(w in text for w in ["best case", "optimistic", "best realistic"])
-    has_worst = any(w in text for w in ["worst case", "pessimistic", "failure"])
+    has_best = any(w in text for w in [
+        "best case", "optimistic", "best realistic", "success", "thrive", "growth"
+    ])
+    has_worst = any(w in text for w in [
+        "worst case", "pessimistic", "failure", "collapse", "fail", "struggle"
+    ])
     has_unexpected = any(w in text for w in [
-        "unexpected", "external", "nobody", "surprise", "shock"
+        "unexpected", "external", "nobody", "surprise", "shock", "wild", "black swan"
     ])
     coverage_score = sum([
         0.4 if has_best else 0,
@@ -112,7 +129,10 @@ def score_task2(analysis: str) -> Dict:
     ])
     breakdown["scenario_coverage"] = round(coverage_score, 2)
 
-    has_alignment = "goal alignment" in text or "aligned" in text
+    has_alignment = any(phrase in text for phrase in [
+        "goal alignment", "aligned", "matches your goal",
+        "your goal", "what you want", "success definition"
+    ])
     breakdown["goal_alignment_checked"] = 1.0 if has_alignment else 0.0
 
     weights = {
