@@ -9,7 +9,7 @@ from test_cases import TEST_CASES
 load_dotenv()
 
 client = OpenAI(
-    api_key=os.getenv("GROQ_API_KEY"),
+    api_key=os.getenv("OPENAI_API_KEY"),
     base_url=os.getenv("API_BASE_URL"),
 )
 MODEL = os.getenv("MODEL_NAME", "llama-3.3-70b-versatile")
@@ -43,7 +43,16 @@ def run_task(task_id: str, test_case: dict) -> float:
     last_result = None
 
     while not done and step_count < 5:
-        analysis = call_llm(obs.instructions)
+        for attempt in range(3):
+            try:
+                analysis = call_llm(obs.instructions)
+                break
+            except Exception as e:
+                if "429" in str(e) and attempt < 2:
+                    print(f"    Rate limited — waiting 60s (attempt {attempt + 1}/3)")
+                    time.sleep(60)
+                else:
+                    raise
         action = Action(analysis=analysis)
         result = env.step(action)
 

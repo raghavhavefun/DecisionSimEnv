@@ -1,5 +1,6 @@
 import re
 from typing import Dict
+from math_graders import score_mathematical
 
 
 def score_task1(analysis: str) -> Dict:
@@ -58,6 +59,21 @@ def score_task1(analysis: str) -> Dict:
     }
     total = sum(breakdown[k] * weights[k] for k in breakdown)
 
+    penalty = 0.0
+    word_count = len(analysis.split())
+    if word_count < 150:
+        penalty += 0.20
+    vague_phrases = ["it depends", "consult a professional", "as an ai", "i cannot", "generally speaking", "in most cases"]
+    if any(phrase in text for phrase in vague_phrases):
+        penalty += 0.15
+    total = max(0.0, round(total - penalty, 2))
+
+    math_result = score_mathematical(analysis, "task1_autopsy")
+    final_score = round((total * 0.6) + (math_result["math_score"] * 0.4), 2)
+    breakdown["math_score"] = math_result["math_score"]
+    breakdown.update(math_result["math_breakdown"])
+    total = final_score
+
     feedback_parts = []
     if breakdown["goal_extraction"] < 0.5:
         feedback_parts.append("Goal profile was incomplete — missing key fields.")
@@ -73,7 +89,7 @@ def score_task1(analysis: str) -> Dict:
         feedback_parts.append("Strong autopsy with good goal extraction and real examples.")
 
     return {
-        "score": round(total, 2),
+        "score": total,
         "breakdown": breakdown,
         "feedback": " ".join(feedback_parts)
     }
@@ -144,6 +160,21 @@ def score_task2(analysis: str) -> Dict:
     }
     total = sum(breakdown[k] * weights[k] for k in breakdown)
 
+    penalty = 0.0
+    word_count = len(analysis.split())
+    if word_count < 150:
+        penalty += 0.20
+    vague_phrases = ["it depends", "consult a professional", "as an ai", "i cannot", "generally speaking", "in most cases"]
+    if any(phrase in text for phrase in vague_phrases):
+        penalty += 0.15
+    total = max(0.0, round(total - penalty, 2))
+
+    math_result = score_mathematical(analysis, "task2_scenarios")
+    final_score = round((total * 0.6) + (math_result["math_score"] * 0.4), 2)
+    breakdown["math_score"] = math_result["math_score"]
+    breakdown.update(math_result["math_breakdown"])
+    total = final_score
+
     feedback_parts = []
     if breakdown["scenario_count"] < 0.6:
         feedback_parts.append("Fewer than 3 scenarios detected — needed at least 5.")
@@ -159,7 +190,7 @@ def score_task2(analysis: str) -> Dict:
         feedback_parts.append("Excellent scenario mapping with good coverage and probabilities.")
 
     return {
-        "score": round(total, 2),
+        "score": total,
         "breakdown": breakdown,
         "feedback": " ".join(feedback_parts)
     }
@@ -206,6 +237,21 @@ def score_task3(analysis: str) -> Dict:
     }
     total = sum(breakdown[k] * weights[k] for k in breakdown)
 
+    penalty = 0.0
+    word_count = len(analysis.split())
+    if word_count < 150:
+        penalty += 0.20
+    vague_phrases = ["it depends", "consult a professional", "as an ai", "i cannot", "generally speaking", "in most cases"]
+    if any(phrase in text for phrase in vague_phrases):
+        penalty += 0.15
+    total = max(0.0, round(total - penalty, 2))
+
+    math_result = score_mathematical(analysis, "task3_simulation")
+    final_score = round((total * 0.6) + (math_result["math_score"] * 0.4), 2)
+    breakdown["math_score"] = math_result["math_score"]
+    breakdown.update(math_result["math_breakdown"])
+    total = final_score
+
     feedback_parts = []
     if breakdown["timeline_simulation"] < 0.5:
         feedback_parts.append("Timeline simulation was too thin — needed month by month detail.")
@@ -221,7 +267,7 @@ def score_task3(analysis: str) -> Dict:
         feedback_parts.append("Excellent simulation with strong verdict and actionable steps.")
 
     return {
-        "score": round(total, 2),
+        "score": total,
         "breakdown": breakdown,
         "feedback": " ".join(feedback_parts)
     }

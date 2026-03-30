@@ -1,0 +1,27 @@
+[
+  {
+    "id": "tc1_startup",
+    "user_input": "I want to build an AI-powered tutoring app for students in tier 2 and 3 cities in India. Monthly subscription Rs 199. Target: 10,000 users in 6 months. Team: 2 engineers, 1 designer. No funding yet.",
+    "domain": "business"
+  },
+  {
+    "id": "tc2_personal",
+    "user_input": "I am 24, working in Bangalore, earning Rs 12L per year. My girlfriend wants to get married but I want to move abroad for a masters degree. We have been together 3 years. I love her but this opportunity may not come again.",
+    "domain": "personal"
+  },
+  {
+    "id": "tc3_expansion",
+    "user_input": "I run a profitable cloud kitchen in Kolkata. Revenue Rs 8L per month, profit margin 18%. I want to expand to a second city. I have Rs 25L capital saved. Options: Delhi or Hyderabad.",
+    "domain": "business"
+  },
+  {
+    "id": "tc4_investment",
+    "user_input": "A founder is asking me for Rs 30L for 8% equity in a D2C skincare brand targeting men in India. They have Rs 4L MRR, 3 months old, no patent, team of 4. I have Rs 50L total to invest this year.",
+    "domain": "investment"
+  },
+  {
+    "id": "tc5_career",
+    "user_input": "I am in 3rd year B.Tech CSE at a tier 2 college in Jaipur. I have a placement offer at TCS for Rs 6.5L. I also want to try for product companies or start something. I have 8 months before placement season ends.",
+    "domain": "career"
+  }
+]
