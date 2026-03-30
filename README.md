@@ -1,185 +1,192 @@
----
-title: DecisionSimEnv
-emoji: 🧠
-colorFrom: blue
-colorTo: purple
-sdk: docker
-pinned: false
-license: mit
-short_description: Universal Decision Stress-Tester for the OpenEnv Hackathon
----
-
 # DecisionSimEnv
-### Universal Decision Stress-Tester
-
-An OpenEnv environment where anyone — a founder, student, investor, or individual facing any life decision — enters their situation in plain language and gets a full simulation: what could go wrong, every possible future, and one clear final verdict.
-
-Like Dr Strange viewing 14 million futures before Infinity War — except for your actual life decisions.
+## Universal Decision Stress-Tester
+**OpenEnv Hackathon Submission | Raghav Agarwal**
 
 ---
 
-## What It Does
+## What This Is
 
-Most people make major decisions with incomplete information. They launch products that already failed. They invest in flawed ideas. They take wrong career paths. Not because they are stupid — but because they never had access to proper simulation tools.
+DecisionSimEnv is an AI-powered decision simulation environment. Anyone — a student, a founder, an investor, a person facing a personal decision — enters their situation in plain language. The AI runs it through 3 tasks of increasing difficulty, finds every flaw, maps every possible future, simulates the best path month by month using real mathematics, and gives a final verdict.
 
-DecisionSimEnv fixes this. Enter any situation. The environment stress-tests it across three escalating tasks, each building on the last.
-
-Works for any domain: business, personal, career, investment, policy — anything.
+Built for the OpenEnv Hackathon. Judged by Meta and Hugging Face engineers.
 
 ---
 
-## The Three Tasks
+## Live Demo
 
-**Task 1 — Idea Autopsy** `task1_autopsy` · Easy · 3 steps
-
-The AI reads the situation, extracts the user's real goals and constraints into a structured goal profile, finds at least 3 specific weaknesses, names real competitors who tried something similar, explains why at least one of them failed with specific details, and identifies the single biggest blind spot the user is missing.
-
-Scoring criteria: goal extraction · weaknesses found · real examples used · failure analysis · blind spot identified
+https://ragarwal023-decisionsimenv.hf.space
 
 ---
 
-**Task 2 — Scenario Mapping** `task2_scenarios` · Medium · 3 steps
+## The 3 Tasks
 
-The AI maps exactly 5 realistic future scenarios like Dr Strange viewing all possible futures. Each scenario has a name, a cause, a 12-month outcome, a probability estimate (all 5 sum to 100%), and a check against the user's actual goals. Covers best realistic case, most likely case, worst case, unexpected external event, and the path nobody considers but should.
+### Task 1 — Diagnose (Easy) — 2 Steps
+Step 1: The AI reads the user's situation, searches the web using Tavily and NewsAPI for real competitors and past failures, and extracts a full goal profile.
+Step 2: The AI outputs a structured pros and cons analysis with real named companies, real numbers, and the single biggest blind spot.
+Graded on: goal extraction, weaknesses found, real examples used, failure analysis, blind spot identified.
 
-Scoring criteria: scenario count · probability estimates · probabilities sum correctly · scenario coverage · goal alignment checked
+### Task 2 — Map Futures (Medium) — 2 Steps
+Step 1: The AI generates exactly 6 named scenarios using Bayesian probability. All probabilities sum to 100%. Each scenario has a cause, month 6 and month 12 outcomes, an elasticity score, and a goal alignment rating.
+Step 2: The AI ranks all 6 scenarios against the user's goal profile using a regret minimization table and selects the best fit scenario for Task 3.
+Graded on: scenario count, probability quality, Shannon entropy, scenario coverage, goal alignment.
+
+### Task 3 — Simulate (Hard) — 3 Steps
+Step 1: The AI simulates the chosen scenario month by month for 12 months using the differential equation V(t) = V0 x e^(r x t) where r changes each month. Shows d²V/dt² at each stage. Runs elasticity check.
+Step 2: The AI checks if the simulation outcome aligns with the user's original goal. Scores alignment out of 10. Produces gap analysis and path comparison table with regret scores.
+Step 3: The AI gives a final verdict — PROCEED, DO NOT PROCEED, or PIVOT TO — with a specific week by week action plan or honest guide.
+Graded on: timeline simulation, derivative modeling, elasticity analysis, path comparison, final verdict quality.
 
 ---
 
-**Task 3 — Future Path Simulator** `task3_simulation` · Hard · 3 steps
+## Mathematics Used
 
-The AI picks the scenario that best matches the user's goals and simulates it month by month for 12 months. At each month: what happens, what decision they face, what risk appears. Then compares all paths in a table (survival probability · goal alignment · biggest risk). Ends with one clear recommendation — not "it depends" — with 3 specific reasons tied to the user's goals and exact first actions to take this week.
-
-Scoring criteria: timeline simulation · unexpected consequences · path comparison · final verdict · actionable recommendation
+| Formula | Task | What It Measures |
+|---------|------|-----------------|
+| P(A given B) = P(B given A) x P(A) / P(B) | Task 2 | Bayesian scenario probabilities grounded in real base rates |
+| H = -sum(p x log p) | Task 2 | Shannon entropy — how well spread the scenarios are |
+| dV/dt = r(t) x V(t) | Task 3 | Differential equation for month-by-month growth or decay |
+| V(t) = V0 x e^(r x t) | Task 3 | Exponential simulation — value at any future month |
+| d²V/dt² positive or negative | Task 3 | Is growth accelerating or decelerating |
+| Elasticity = (dOutput/Output) / (dInput/Input) | Task 3 | How fragile the plan is if one assumption is wrong |
+| Regret = max(all outcomes) minus outcome(i) | Task 2 and 3 | Regret minimization — which path causes least regret |
 
 ---
 
-## Mathematical Grading
+## APIs Used
 
-Every score blends keyword scoring (60%) with mathematical analysis (40%):
-
-| Math Criterion | What It Measures |
-|---|---|
-| Expected Value | Whether probability estimates are provided and internally consistent |
-| Sensitivity Analysis | How many "what if" and dependency checks are in the analysis |
-| Regret Minimization | Whether downside, irreversibility, and worst-case thinking is present |
-| Specificity | Density of real numbers, named entities, and concrete figures |
-| Coverage | How many dimensions are addressed: financial, emotional, strategic, risk, time, people |
-| Entropy Quality | Whether scenario probabilities are well-distributed (not all weight on one outcome) |
-
-Penalties applied before blending: −0.20 if analysis is under 150 words · −0.15 if vague phrases detected ("it depends", "consult a professional", "as an AI", etc.)
+| API | What It Gives | Key Required |
+|-----|--------------|-------------|
+| Tavily | Web search — real competitors, news, case studies from any domain | Yes — TAVILY_API_KEY |
+| NewsAPI | Recent news on any topic — business, career, personal, policy | Yes — NEWS_API_KEY |
+| Alpha Vantage | Stock and sector market data for investment and business decisions | Yes — ALPHA_VANTAGE_KEY |
+| World Bank API | GDP, market size, India economic data | No key needed |
+| Hacker News API | Startup community data — who failed, who succeeded and why | No key needed |
 
 ---
 
 ## Baseline Scores
 
-Tested with `llama-3.3-70b-versatile` via Groq API.
-
-| Task | Baseline Score |
-|---|---|
-| task1_autopsy | 1.00 |
-| task2_scenarios | 0.93 |
-| task3_simulation | 0.89 |
-| **Overall Average** | **0.94** |
+| Task | Average Score |
+|------|--------------|
+| Task 1 — Diagnose | 0.71 |
+| Task 2 — Map Futures | 0.83 |
+| Task 3 — Simulate | Pending full run |
 
 ---
 
-## Action Space
+## The 5 Test Cases
 
-```json
-{
-  "analysis": "The agent's full text response to the current task instructions",
-  "chosen_path": "Optional — only used in Task 3 to specify which scenario to simulate"
-}
-```
-
-Pass `"analysis": "AUTO"` to have the server call its own LLM automatically. No API key needed from the caller.
-
-## Observation Space
-
-```json
-{
-  "task_id": "task1_autopsy | task2_scenarios | task3_simulation",
-  "user_input": "The raw situation the user described",
-  "goal_profile": "Extracted goals, constraints, risk tolerance, success definition",
-  "current_step": "Which step of the episode (1, 2, or 3)",
-  "max_steps": "Total steps in this task (3 for all tasks)",
-  "previous_analysis": "Output from the previous step passed forward as context",
-  "instructions": "Exact prompt the agent must respond to right now"
-}
-```
+| # | Domain | Situation Summary |
+|---|--------|------------------|
+| 1 | Business | AI tutoring app for tier 2 and 3 cities in India, Rs 199/month, target 10,000 users in 6 months |
+| 2 | Personal | 24 years old in Bangalore, girlfriend wants marriage, wants to go abroad for masters degree |
+| 3 | Business | Cloud kitchen in Kolkata, Rs 8L/month revenue, 18% margin, expanding to Delhi or Hyderabad |
+| 4 | Investment | Founder asking Rs 30L for 8% equity in D2C skincare brand targeting men, Rs 4L MRR, 3 months old |
+| 5 | Career | 3rd year BTech CSE tier 2 college, TCS offer Rs 6.5L, considering product companies or starting up |
 
 ---
 
-## API Endpoints
-
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | `/` | Environment info and task list |
-| POST | `/reset` | Start a new episode: `{"task_id": "...", "user_input": "..."}` |
-| POST | `/step` | Submit analysis: `{"analysis": "..."}` — returns score + next observation |
-| GET | `/state` | Full current environment state |
-| GET | `/health` | Health check |
-| GET | `/ui` | Browser UI for interactive use |
-| GET | `/runs` | Last 20 saved runs |
-| GET | `/test_cases` | The 5 built-in test cases |
-
----
-
-## Environment Variables
-
-| Variable | Description |
-|---|---|
-| `OPENAI_API_KEY` | API key for the LLM provider (Groq-compatible) |
-| `API_BASE_URL` | LLM API base URL (e.g. `https://api.groq.com/openai/v1`) |
-| `MODEL_NAME` | Model to use (default: `llama-3.3-70b-versatile`) |
-| `HF_TOKEN` | HuggingFace token for Space deployment |
-| `TAVILY_API_KEY` | Optional — enables real-world web search context in Task 1 |
+## Project Structure
+DecisionSimEnv/
+├── environment.py      Main environment — reset() step() state() + all API calls
+├── graders.py          Scoring logic for all 3 tasks
+├── math_graders.py     Real mathematical scoring — Bayesian, Shannon entropy, derivatives, elasticity, regret
+├── inference.py        Baseline inference script required by hackathon
+├── models.py           Pydantic typed models — Observation, Action, Reward, EnvironmentState
+├── test_cases.py       5 test cases and all 7 task step instruction prompts
+├── app.py              FastAPI wrapper with all endpoints
+├── storage.py          Run storage and history
+├── openenv.yaml        OpenEnv spec configuration file
+├── Dockerfile          Container for deployment
+├── requirements.txt    Python dependencies
+└── ui.html             Web interface
 
 ---
 
-## Setup
-
+## Setup and Running Locally
 ```bash
 git clone https://huggingface.co/spaces/ragarwal023/DecisionSimEnv
 cd DecisionSimEnv
 pip install -r requirements.txt
 ```
 
-Create a `.env` file:
-
-```
-OPENAI_API_KEY=your_key_here
+Create a `.env` file in the root directory:
 API_BASE_URL=https://api.groq.com/openai/v1
 MODEL_NAME=llama-3.3-70b-versatile
-HF_TOKEN=your_hf_token_here
+OPENAI_API_KEY=your_groq_key_here
 TAVILY_API_KEY=your_tavily_key_here
-```
+NEWS_API_KEY=your_newsapi_key_here
+ALPHA_VANTAGE_KEY=your_alpha_vantage_key_here
 
-Run locally:
-
+Start the server:
 ```bash
-uvicorn app:app --host 0.0.0.0 --port 7860
+uvicorn app:app --reload
 ```
 
-Open the UI at `http://localhost:7860/ui`
-
-Run baseline inference:
-
+Run the baseline inference:
 ```bash
 python inference.py
 ```
 
 ---
 
-## What Makes This Environment Unique
-
-Most decision-support benchmarks test narrow domains with rigid formats. DecisionSimEnv is domain-agnostic by design — the same three tasks work for a startup founder, a person choosing between a job offer and a masters degree, an investor evaluating a deal, or anyone facing an irreversible life decision.
-
-The grading combines keyword heuristics with mathematical scoring (entropy, expected value, sensitivity analysis, regret minimization) so that vague, hedged, or low-specificity answers are penalised even if they contain the right keywords.
-
-The three-task cascade forces the AI to reason progressively: extract structure → map uncertainty → simulate and commit to a verdict.
+## Docker
+```bash
+docker build -t decisionsimenv .
+docker run -p 7860:7860 --env-file .env decisionsimenv
+```
 
 ---
 
-*Built for the OpenEnv Hackathon by Raghav Agarwal*
+## API Endpoints
+
+| Endpoint | Method | What It Does |
+|----------|--------|-------------|
+| /reset | POST | Start a new episode. Pass task_id and user_input. |
+| /step | POST | Submit analysis and get score plus next instruction. Pass analysis as AUTO to let server call LLM. |
+| /state | GET | Get current episode state including step number and scores so far. |
+| /health | GET | Health check. Returns status ok. |
+| /ui | GET | Opens the web interface. |
+
+### Quick Example
+```bash
+curl -X POST https://ragarwal023-decisionsimenv.hf.space/reset \
+  -H "Content-Type: application/json" \
+  -d '{"task_id": "task1_autopsy", "user_input": "I want to build an AI tutoring app for tier 2 cities in India."}'
+
+curl -X POST https://ragarwal023-decisionsimenv.hf.space/step \
+  -H "Content-Type: application/json" \
+  -d '{"analysis": "AUTO"}'
+```
+
+---
+
+## OpenEnv Spec Compliance
+
+| Requirement | Status |
+|-------------|--------|
+| Typed Pydantic models Observation Action Reward | Done |
+| step() returns obs reward done info | Done |
+| reset() returns initial observation | Done |
+| state() returns current state | Done |
+| openenv.yaml present with metadata | Done |
+| Minimum 3 tasks easy medium hard | Done |
+| Graders score 0.0 to 1.0 | Done |
+| Meaningful partial progress signals | Done |
+| inference.py in root directory | Done |
+| Uses OpenAI client for all LLM calls | Done |
+| Reads API_BASE_URL MODEL_NAME HF_TOKEN from env | Done |
+| Dockerfile builds and runs cleanly | Done |
+| Deployed to HuggingFace Spaces tagged openenv | Done |
+| Inference runtime under 20 minutes | Done |
+| Runs on 2 vCPU 8GB RAM no GPU | Done |
+
+---
+
+## Submitted By
+
+Name: Raghav Agarwal
+Email: raghav22062003ss@gmail.com
+Competition: OpenEnv Hackathon Round 1
+Format: Solo Warrior
+Environment: DecisionSimEnv — Universal Decision Stress-Tester
