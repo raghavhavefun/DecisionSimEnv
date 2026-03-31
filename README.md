@@ -96,7 +96,7 @@ The UI at /ui provides a full browser-based interface for testing the environmen
 ### Environment Variables
 Add to your .env file:
 ```
-GEMINI_API_KEY=your_gemini_key_here   # UI only — prompt builder
+GEMINI_API_KEY=AIza****
 ```
 
 ---
@@ -151,12 +151,12 @@ Create a `.env` file in the root directory:
 ```
 API_BASE_URL=https://api.groq.com/openai/v1
 MODEL_NAME=llama-3.3-70b-versatile
-OPENAI_API_KEY=your_groq_key_here
-HF_TOKEN=your_huggingface_token
-TAVILY_API_KEY=your_tavily_key_here
-NEWS_API_KEY=your_newsapi_key_here
-ALPHA_VANTAGE_KEY=your_alpha_vantage_key_here
-GEMINI_API_KEY=your_gemini_key_here   # UI only
+OPENAI_API_KEY=gsk_****
+HF_TOKEN=hf_****
+TAVILY_API_KEY=tvly-****
+NEWS_API_KEY=7b9a-****
+ALPHA_VANTAGE_KEY=0YII****
+GEMINI_API_KEY=AIza****
 ```
 
 Start the server:
