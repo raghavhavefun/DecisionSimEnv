@@ -400,6 +400,34 @@
   .verdict-weak { color: #f87171; }
   .summary-desc { font-size: 0.82rem; color: var(--muted); margin-top: 4px; max-width: 480px; line-height: 1.55; }
 
+  /* ── Conclusion block ── */
+  .conclusion-block {
+    margin-top: 22px;
+    background: rgba(91,106,248,0.06);
+    border: 1px solid rgba(91,106,248,0.2);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    padding: 16px 20px;
+  }
+  .conclusion-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent-h);
+    margin-bottom: 10px;
+  }
+  .conclusion-text {
+    font-size: 0.9rem;
+    line-height: 1.8;
+    color: var(--text);
+  }
+  .conclusion-loading {
+    font-size: 0.84rem;
+    color: var(--muted);
+    font-style: italic;
+  }
+
   /* ── History ── */
   .history-section h2 {
     font-size: 0.78rem;
@@ -599,29 +627,42 @@ let attachedUrls  = [];
 const GEMINI_API_KEY = 'AIzaSyAovrS7F8uReZcRpMfkUFg1Tl8RwX65b8o';
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
 
-const GEMINI_SYSTEM = `You are a content scanner for DecisionSimEnv, an AI-powered universal decision stress-testing system.
+const GEMINI_SYSTEM = `You are the intake processor for DecisionSimEnv — an AI decision simulation system that stress-tests any decision through 3 mathematical tasks using Bayesian probability, differential equations, and regret minimization.
 
-The system stress-tests any decision through 3 tasks:
-Task 1 — Diagnose: finds every flaw, weakness, blind spot using real web data from Tavily, NewsAPI, World Bank APIs
-Task 2 — Map Futures: generates 6 scenarios using Bayesian probability, all summing to 100%, with elasticity scores
-Task 3 — Simulate: month-by-month simulation using V(t) = V0 x e^(rt), differential equations, gives final verdict PROCEED/DO NOT PROCEED/PIVOT
+The quality of the simulation depends entirely on the richness of your input prompt. A thin prompt produces thin analysis. A rich prompt produces life-changing insight.
 
-The system handles any domain: business decisions, personal life decisions, career choices, investments, policy decisions, academic choices, relationship decisions — anything.
+YOUR JOB:
+Read everything the user has provided — their typed situation, any uploaded files (PDFs, images, screenshots, spreadsheets, chat exports, business plans, pitch decks, financial statements, offer letters, WhatsApp screenshots, Instagram DMs, anything), and any URLs they have referenced.
 
-Your job: Read everything the user has provided — their typed text, any uploaded files (PDFs, images, spreadsheets, screenshots), any URLs.
-Extract every relevant fact, number, name, date, constraint, goal, and risk from all content.
-Combine everything into one single rich detailed prompt that will be fed into the simulation system.
+Extract EVERYTHING relevant:
+- Every number (money, time, distance, age, percentage, count)
+- Every named person, company, place, product
+- Every date and timeline mentioned
+- Every constraint (what they cannot or will not sacrifice)
+- Every goal (what they actually want, not just what they said)
+- Every risk mentioned or implied
+- Every relationship dynamic
+- Every pattern in behavior (if chat screenshots are provided, analyze response times, who initiates, emotional tone, word choice)
+- Every financial figure
+- Every competing option they are choosing between
 
-Rules:
-- Output ONLY the combined rich prompt as plain text
-- No preamble, no explanation, no advice, no headers
-- Keep all specific numbers, names, dates exactly as found
-- Write in first person as if the user is describing their situation
-- Extract and include ALL data from uploaded files and images
-- If images are provided describe what you see and extract all numbers
-- If URLs are mentioned extract the key information
-- Be extremely specific and detailed — vague inputs get vague outputs
-- There is no word limit — include everything relevant`;
+Then add relevant context that strengthens the simulation:
+- If it is a business decision: add what you know about the market, similar companies that succeeded or failed, typical unit economics
+- If it is a personal decision: add the psychological patterns at play, what research says about similar situations
+- If it is a career decision: add what the job market data shows, typical trajectories for this path
+- If it is an investment: add what the numbers actually imply, comparable deals and their outcomes
+- If it is a relationship decision: add what the behavioral signals actually mean, base rates for similar situations
+
+OUTPUT FORMAT:
+Write one single continuous prompt in first person as if the user is describing their situation to the world's best decision analyst.
+Start with who they are and what decision they face.
+Include every extracted fact with its exact number or detail.
+Include every piece of context you added.
+Include every signal and pattern you identified from uploaded files.
+Be exhaustive. Be specific. Be detailed.
+There is absolutely no word limit — longer and richer is always better.
+Do not summarize. Do not omit. Do not hedge.
+Output only the prompt. No preamble. No explanation. No headers.`;
 
 async function fileToBase64(file) {
   return new Promise((resolve, reject) => {
@@ -665,6 +706,42 @@ async function buildPromptWithGemini(userText, files, urls) {
   if (!response.ok) return userText;
   const data = await response.json();
   return data.candidates?.[0]?.content?.parts?.[0]?.text || userText;
+}
+
+async function generateConclusion(userInput, task1Text, task2Text, task3Text, overallScore) {
+  const prompt = `You have just completed a full decision simulation for this person:
+
+THEIR SITUATION:
+${userInput}
+
+TASK 1 FINDINGS (diagnosis):
+${task1Text}
+
+TASK 2 FINDINGS (scenarios):
+${task2Text}
+
+TASK 3 FINDINGS (simulation and verdict):
+${task3Text}
+
+OVERALL SCORE: ${overallScore}%
+
+Now write ONE conclusive paragraph — 150 to 250 words — that:
+- Starts with a direct statement: DO THIS or DO NOT DO THIS or INSTEAD DO THIS
+- Explains what will most likely happen if they proceed as planned
+- Explains what will most likely happen if they take the alternative path
+- References 2 or 3 specific findings from the tasks above
+- Ends with one concrete action they should take in the next 7 days
+- Sounds like advice from a brilliant honest friend, not a consultant
+- No bullet points. No headers. Just one flowing paragraph.`;
+
+  const parts = [{ text: prompt }];
+  const response = await fetch(GEMINI_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ contents: [{ parts }] })
+  });
+  const data = await response.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
 }
 
 // ── Markdown ──────────────────────────────────────────────────────────────────
@@ -961,6 +1038,10 @@ function renderFinalSummary(taskScores) {
         <span class="summary-verdict ${verdictClass}">${verdictText}</span>
         <span class="summary-desc">${esc(verdictDesc)}</span>
       </div>
+    </div>
+    <div class="conclusion-block" id="conclusionBlock">
+      <div class="conclusion-label">Conclusion</div>
+      <div class="conclusion-loading" id="conclusionText">Gemini is writing your conclusion…</div>
     </div>`;
 }
 
@@ -1078,8 +1159,31 @@ async function runAnalysis() {
   setStatus('');
   btn.disabled = false;
 
-  // Render final summary
+  // Render final summary (with conclusion loading placeholder)
   renderFinalSummary(taskScores);
+
+  // Generate Gemini conclusion
+  const valid = taskScores.filter(s => s !== null && s !== undefined);
+  if (valid.length) {
+    const avg = valid.reduce((a, b) => a + b, 0) / valid.length;
+    try {
+      const conclusion = await generateConclusion(
+        enrichedPrompt,
+        outputs.task1 || '',
+        outputs.task2 || '',
+        outputs.task3 || '',
+        Math.round(avg * 100)
+      );
+      const ct = document.getElementById('conclusionText');
+      if (ct) {
+        ct.className = 'conclusion-text';
+        ct.textContent = conclusion;
+      }
+    } catch(e) {
+      const ct = document.getElementById('conclusionText');
+      if (ct) ct.textContent = 'Conclusion unavailable.';
+    }
+  }
 
   // Persist run
   const run = {
