@@ -44,17 +44,53 @@
 
   .api-url-wrap { display: flex; align-items: center; gap: 8px; }
   .api-url-wrap label { font-size: 0.75rem; color: var(--muted); white-space: nowrap; }
-  .api-url-wrap input {
+
+  #apiSelect {
     background: var(--surface);
     border: 1px solid var(--border);
     color: var(--text);
     padding: 6px 10px;
     border-radius: 6px;
     font-size: 0.8rem;
-    width: 320px;
+    width: 260px;
     outline: none;
+    cursor: pointer;
   }
-  .api-url-wrap input:focus { border-color: var(--accent); }
+  #apiSelect:focus { border-color: var(--accent); }
+
+  .tooltip-wrap { position: relative; display: inline-flex; align-items: center; }
+  .tooltip-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 17px;
+    height: 17px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 0.65rem;
+    font-weight: 700;
+    cursor: default;
+    user-select: none;
+  }
+  .tooltip-box {
+    display: none;
+    position: absolute;
+    top: 26px;
+    right: 0;
+    width: 260px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 0.74rem;
+    color: var(--text);
+    line-height: 1.55;
+    z-index: 100;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  }
+  .tooltip-wrap:hover .tooltip-box { display: block; }
 
   /* ── Main ── */
   main { max-width: 1140px; margin: 0 auto; padding: 32px; }
@@ -72,12 +108,119 @@
     font-size: 0.93rem;
     font-family: inherit;
     resize: vertical;
-    min-height: 110px;
+    min-height: 130px;
     outline: none;
     transition: border-color 0.15s;
   }
   textarea:focus    { border-color: var(--accent); }
   textarea::placeholder { color: var(--muted); }
+
+  /* ── Attach section ── */
+  #attachSection {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-attach {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .btn-attach:hover { border-color: var(--accent); color: var(--text); }
+
+  #urlInputArea {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  #urlField {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    width: 260px;
+    outline: none;
+  }
+  #urlField:focus { border-color: var(--accent); }
+
+  #attachedItems {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    width: 100%;
+    margin-top: 4px;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 0.75rem;
+    color: var(--text);
+    max-width: 280px;
+    overflow: hidden;
+  }
+  .chip-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+  }
+  .chip-remove {
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 0.9rem;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .chip-remove:hover { color: var(--error); }
+
+  /* ── Enriched prompt collapsible ── */
+  #enrichedSection {
+    margin-top: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--t2);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  #enrichedToggle {
+    width: 100%;
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 9px 14px;
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  #enrichedToggle:hover { color: var(--text); }
+  #enrichedContent {
+    padding: 10px 14px;
+    font-size: 0.8rem;
+    color: var(--muted);
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 200px;
+    overflow-y: auto;
+    border-top: 1px solid var(--border);
+  }
 
   .btn-row { display: flex; align-items: center; gap: 14px; margin-top: 12px; }
 
@@ -102,7 +245,7 @@
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 18px;
-    margin-bottom: 40px;
+    margin-bottom: 24px;
   }
   @media (max-width: 860px) { .results-grid { grid-template-columns: 1fr; } }
 
@@ -178,11 +321,20 @@
   #c3 .badge { background: rgba(5,150,105,.18);  color: #34d399; }
 
   .step-text {
-    font-size: 0.85rem;
-    line-height: 1.78;
-    white-space: pre-wrap;
+    overflow-y: auto;
+    max-height: 450px;
+    line-height: 1.75;
+    font-size: 0.88rem;
+    padding: 12px;
     word-break: break-word;
   }
+  .step-text h2,.step-text h3,.step-text h4,.step-text h5 {
+    margin: 12px 0 6px; font-size: 1rem; color: var(--accent);
+  }
+  .step-text ul { padding-left: 18px; margin: 6px 0; }
+  .step-text li { margin: 3px 0; }
+  .step-text strong { color: var(--text); }
+  .step-text p { margin: 4px 0; }
 
   .card-err {
     color: var(--error);
@@ -191,6 +343,62 @@
     padding: 10px 12px;
     border-radius: 6px;
   }
+
+  /* ── Markdown tables ── */
+  .md-table { width:100%; border-collapse:collapse; margin:10px 0; font-size:0.82rem; }
+  .md-table th { background:var(--surface2); font-weight:700; padding:6px 10px;
+                 border:1px solid var(--border); text-align:left; }
+  .md-table td { padding:6px 10px; border:1px solid var(--border); vertical-align:top; }
+  .md-table tr:nth-child(even) td { background:rgba(255,255,255,0.02); }
+
+  /* ── Final summary ── */
+  #finalSummary {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin-bottom: 40px;
+  }
+  #finalSummary h2 {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 18px;
+  }
+  .summary-scores {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .summary-score-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 20px;
+    min-width: 100px;
+  }
+  .summary-score-label { font-size: 0.7rem; color: var(--muted); margin-bottom: 4px; }
+  .summary-score-value { font-size: 1.4rem; font-weight: 800; color: var(--accent); }
+  .summary-overall {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .summary-big-score { font-size: 3rem; font-weight: 900; color: var(--accent); line-height: 1; }
+  .summary-verdict-wrap { display: flex; flex-direction: column; gap: 4px; }
+  .summary-verdict-label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+  .summary-verdict { font-size: 1.1rem; font-weight: 800; }
+  .verdict-strong { color: #34d399; }
+  .verdict-moderate { color: #fbbf24; }
+  .verdict-weak { color: #f87171; }
+  .summary-desc { font-size: 0.82rem; color: var(--muted); margin-top: 4px; max-width: 480px; line-height: 1.55; }
 
   /* ── History ── */
   .history-section h2 {
@@ -226,6 +434,51 @@
   }
   .hist-date { font-size: 0.74rem; color: var(--muted); white-space: nowrap; }
   .hist-empty { font-size: 0.84rem; color: var(--muted); }
+
+  /* ── Step score badge ── */
+  .step-score {
+    margin-left: auto;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--accent-h);
+    background: rgba(91,106,248,.15);
+    padding: 1px 7px;
+    border-radius: 10px;
+  }
+
+  /* ── Final score block ── */
+  .final-score-block {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-top: 18px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--muted);
+  }
+  .final-score-value {
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--accent);
+  }
+
+  /* ── User input display ── */
+  .run-input-display {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 0.87rem;
+    color: var(--text);
+    margin-bottom: 18px;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
 </style>
 </head>
 <body>
@@ -236,15 +489,45 @@
     <p>Universal Decision Stress-Tester</p>
   </div>
   <div class="api-url-wrap">
-    <label for="apiUrl">API</label>
-    <input id="apiUrl" type="text" placeholder="https://ragarwal023-decisionsimenv.hf.space">
+    <label for="apiSelect">API</label>
+    <select id="apiSelect">
+      <option value="https://ragarwal023-decisionsimenv.hf.space">🔵 HuggingFace (Live)</option>
+      <option value="http://localhost:8000">🟢 Local Server</option>
+    </select>
+    <div class="tooltip-wrap">
+      <span class="tooltip-icon">?</span>
+      <div class="tooltip-box">
+        <strong>HuggingFace Live:</strong> deployed server, use for real analysis.<br><br>
+        <strong>Local Server:</strong> your own machine, requires running:<br>
+        <code>python -m uvicorn app:app --reload</code>
+      </div>
+    </div>
   </div>
 </header>
 
 <main>
   <section class="input-section">
     <label for="userInput">Describe your situation</label>
-    <textarea id="userInput" placeholder="E.g. I want to build an AI-powered tutoring app for students in tier 2 and 3 cities in India. Monthly subscription Rs 199. Target: 10,000 users in 6 months. Team: 2 engineers, 1 designer. No funding yet."></textarea>
+    <textarea id="userInput" placeholder="Describe your situation in full detail. Include: who you are, what decision you face, key numbers (money, time, resources), constraints (what you cannot sacrifice), and what success looks like for you. The more specific you are, the better the analysis.
+
+Example: I am 26, software engineer in Bangalore, Rs 14L/year. A Singapore startup offered me SGD 6000/month + 0.5% equity. I have Rs 8L savings, no dependents, want financial independence by 35. My current company is stable but slow-growth. Should I move?"></textarea>
+
+    <div id="attachSection">
+      <button class="btn-attach" id="addFileBtn">+ Attach File</button>
+      <input type="file" id="fileInput" multiple accept="*/*" style="display:none">
+      <button class="btn-attach" id="addUrlBtn">+ Add URL</button>
+      <div id="urlInputArea" style="display:none">
+        <input type="text" id="urlField" placeholder="Paste a URL...">
+        <button class="btn-attach" id="urlConfirmBtn">Add</button>
+      </div>
+      <div id="attachedItems"></div>
+    </div>
+
+    <div id="enrichedSection" style="display:none">
+      <button id="enrichedToggle">&#9656; Enriched prompt built by Gemini:</button>
+      <div id="enrichedContent" style="display:none"></div>
+    </div>
+
     <div class="btn-row">
       <button class="btn-run" id="runBtn" onclick="runAnalysis()">Run Analysis</button>
       <span id="statusMsg"></span>
@@ -252,6 +535,7 @@
   </section>
 
   <section>
+    <div id="runInputDisplay" class="run-input-display" style="display:none"></div>
     <div class="results-grid">
 
       <div class="task-card" id="c1">
@@ -259,7 +543,7 @@
           <div class="dot"></div>
           <div>
             <div class="card-title">Task 1 — Autopsy</div>
-            <div class="card-subtitle">Goal extraction &amp; weakness analysis</div>
+            <div class="card-subtitle">Goal extraction · Weakness analysis · Real data</div>
           </div>
         </div>
         <div class="card-body" id="b1"><div class="placeholder">Analysis will appear here</div></div>
@@ -270,7 +554,7 @@
           <div class="dot"></div>
           <div>
             <div class="card-title">Task 2 — Scenarios</div>
-            <div class="card-subtitle">5-scenario future mapping</div>
+            <div class="card-subtitle">6 scenarios · Bayesian probability · Ranking</div>
           </div>
         </div>
         <div class="card-body" id="b2"><div class="placeholder">Analysis will appear here</div></div>
@@ -281,13 +565,15 @@
           <div class="dot"></div>
           <div>
             <div class="card-title">Task 3 — Simulation</div>
-            <div class="card-subtitle">Timeline simulation &amp; final verdict</div>
+            <div class="card-subtitle">Month-by-month simulation · Alignment · Final verdict</div>
           </div>
         </div>
         <div class="card-body" id="b3"><div class="placeholder">Analysis will appear here</div></div>
       </div>
 
     </div>
+
+    <div id="finalSummary" style="display:none"></div>
   </section>
 
   <section class="history-section">
@@ -300,16 +586,158 @@
 const DEFAULT_API = 'https://ragarwal023-decisionsimenv.hf.space';
 
 const TASKS = [
-  { id: 'task1_autopsy',    bodyId: 'b1', stepLabels: ['Autopsy', 'Scenarios', 'Simulation'] },
-  { id: 'task2_scenarios',  bodyId: 'b2', stepLabels: ['Scenarios', 'Simulation', 'Verdict'] },
-  { id: 'task3_simulation', bodyId: 'b3', stepLabels: ['Autopsy', 'Scenarios', 'Simulation'] },
+  { id: 'task1_autopsy',    bodyId: 'b1', stepLabels: ['Goal & Context Extraction', 'Weakness Analysis'] },
+  { id: 'task2_scenarios',  bodyId: 'b2', stepLabels: ['Scenario Mapping', 'Probability & Impact Analysis'] },
+  { id: 'task3_simulation', bodyId: 'b3', stepLabels: ['Timeline Simulation', 'Stress Testing', 'Final Verdict'] },
 ];
+
+let attachedFiles = [];
+let attachedUrls  = [];
+
+// ── Gemini ────────────────────────────────────────────────────────────────────
+
+const GEMINI_API_KEY = 'AIzaSyAovrS7F8uReZcRpMfkUFg1Tl8RwX65b8o';
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+
+const GEMINI_SYSTEM = `You are a content scanner for DecisionSimEnv, an AI-powered universal decision stress-testing system.
+
+The system stress-tests any decision through 3 tasks:
+Task 1 — Diagnose: finds every flaw, weakness, blind spot using real web data from Tavily, NewsAPI, World Bank APIs
+Task 2 — Map Futures: generates 6 scenarios using Bayesian probability, all summing to 100%, with elasticity scores
+Task 3 — Simulate: month-by-month simulation using V(t) = V0 x e^(rt), differential equations, gives final verdict PROCEED/DO NOT PROCEED/PIVOT
+
+The system handles any domain: business decisions, personal life decisions, career choices, investments, policy decisions, academic choices, relationship decisions — anything.
+
+Your job: Read everything the user has provided — their typed text, any uploaded files (PDFs, images, spreadsheets, screenshots), any URLs.
+Extract every relevant fact, number, name, date, constraint, goal, and risk from all content.
+Combine everything into one single rich detailed prompt that will be fed into the simulation system.
+
+Rules:
+- Output ONLY the combined rich prompt as plain text
+- No preamble, no explanation, no advice, no headers
+- Keep all specific numbers, names, dates exactly as found
+- Write in first person as if the user is describing their situation
+- Extract and include ALL data from uploaded files and images
+- If images are provided describe what you see and extract all numbers
+- If URLs are mentioned extract the key information
+- Be extremely specific and detailed — vague inputs get vague outputs
+- There is no word limit — include everything relevant`;
+
+async function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function buildPromptWithGemini(userText, files, urls) {
+  const parts = [];
+  parts.push({ text: GEMINI_SYSTEM });
+  parts.push({ text: `USER TYPED SITUATION:\n${userText}` });
+
+  for (const url of urls) {
+    parts.push({ text: `REFERENCED URL: ${url}` });
+  }
+
+  for (const file of files) {
+    try {
+      const base64 = await fileToBase64(file);
+      parts.push({
+        inlineData: {
+          mimeType: file.type || 'application/octet-stream',
+          data: base64
+        }
+      });
+      parts.push({ text: `Above is uploaded file named: ${file.name}` });
+    } catch(e) {
+      parts.push({ text: `User uploaded file: ${file.name} (could not read)` });
+    }
+  }
+
+  const response = await fetch(GEMINI_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ contents: [{ parts }] })
+  });
+
+  if (!response.ok) return userText;
+  const data = await response.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || userText;
+}
+
+// ── Markdown ──────────────────────────────────────────────────────────────────
+
+function markdownToHtml(text) {
+  if (!text) return '';
+  let html = text;
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  html = html.replace(/^#### (.+)$/gm, '<h5>$1</h5>');
+  html = html.replace(/^### (.+)$/gm, '<h4>$1</h4>');
+  html = html.replace(/^## (.+)$/gm, '<h3>$1</h3>');
+  html = html.replace(/^# (.+)$/gm, '<h2>$1</h2>');
+  html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
+  html = html.replace(/(<li>[\s\S]*?<\/li>)/g, '<ul>$1</ul>');
+  html = html.replace(/<\/ul>\s*<ul>/g, '');
+
+  // Table rendering
+  const lines = html.split('\n');
+  const result = [];
+  let inTable = false;
+  let tableRows = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (line.trim().startsWith('|') && line.trim().endsWith('|')) {
+      if (line.includes('---')) continue;
+      if (!inTable) { inTable = true; tableRows = []; }
+      const cells = line.split('|').filter(c => c.trim() !== '');
+      tableRows.push(cells);
+    } else {
+      if (inTable) {
+        let tableHtml = '<table class="md-table">';
+        tableRows.forEach((row, idx) => {
+          tableHtml += '<tr>';
+          row.forEach(cell => {
+            const tag = idx === 0 ? 'th' : 'td';
+            tableHtml += `<${tag}>${cell.trim()}</${tag}>`;
+          });
+          tableHtml += '</tr>';
+        });
+        tableHtml += '</table>';
+        result.push(tableHtml);
+        inTable = false;
+        tableRows = [];
+      }
+      result.push(line);
+    }
+  }
+  if (inTable && tableRows.length > 0) {
+    let tableHtml = '<table class="md-table">';
+    tableRows.forEach((row, idx) => {
+      tableHtml += '<tr>';
+      row.forEach(cell => {
+        const tag = idx === 0 ? 'th' : 'td';
+        tableHtml += `<${tag}>${cell.trim()}</${tag}>`;
+      });
+      tableHtml += '</tr>';
+    });
+    tableHtml += '</table>';
+    result.push(tableHtml);
+  }
+
+  html = result.join('\n');
+  html = html.replace(/\n\n+/g, '</p><p>');
+  html = '<p>' + html + '</p>';
+  return html;
+}
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function apiUrl() {
-  const v = document.getElementById('apiUrl').value.trim();
-  return v || DEFAULT_API;
+  return document.getElementById('apiSelect').value;
 }
 
 function esc(s) {
@@ -328,6 +756,71 @@ function fmtDate(iso) {
     });
   } catch (_) { return iso.slice(0, 16); }
 }
+
+// ── File & URL attach ─────────────────────────────────────────────────────────
+
+function renderChips() {
+  const container = document.getElementById('attachedItems');
+  container.innerHTML = '';
+
+  attachedFiles.forEach((file, idx) => {
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.innerHTML = `<span class="chip-name">📄 ${esc(file.name)}</span><span class="chip-remove" data-type="file" data-idx="${idx}">✕</span>`;
+    container.appendChild(chip);
+  });
+
+  attachedUrls.forEach((url, idx) => {
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    const display = url.length > 40 ? url.slice(0, 40) + '…' : url;
+    chip.innerHTML = `<span class="chip-name">🔗 ${esc(display)}</span><span class="chip-remove" data-type="url" data-idx="${idx}">✕</span>`;
+    container.appendChild(chip);
+  });
+
+  container.querySelectorAll('.chip-remove').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.dataset.type === 'file') {
+        attachedFiles.splice(Number(btn.dataset.idx), 1);
+      } else {
+        attachedUrls.splice(Number(btn.dataset.idx), 1);
+      }
+      renderChips();
+    });
+  });
+}
+
+document.getElementById('addFileBtn').addEventListener('click', () => {
+  document.getElementById('fileInput').click();
+});
+
+document.getElementById('fileInput').addEventListener('change', e => {
+  Array.from(e.target.files).forEach(f => attachedFiles.push(f));
+  e.target.value = '';
+  renderChips();
+});
+
+document.getElementById('addUrlBtn').addEventListener('click', () => {
+  const area = document.getElementById('urlInputArea');
+  area.style.display = area.style.display === 'none' ? 'flex' : 'none';
+  if (area.style.display === 'flex') document.getElementById('urlField').focus();
+});
+
+function addUrl() {
+  const field = document.getElementById('urlField');
+  const val = field.value.trim();
+  if (val) {
+    attachedUrls.push(val);
+    field.value = '';
+    renderChips();
+    document.getElementById('urlInputArea').style.display = 'none';
+  }
+}
+
+document.getElementById('urlConfirmBtn').addEventListener('click', addUrl);
+document.getElementById('urlField').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addUrl();
+});
 
 // ── API calls ─────────────────────────────────────────────────────────────────
 
@@ -370,7 +863,7 @@ function showSkeleton(bodyId) {
     </div>`;
 }
 
-function addStepBlock(bodyId, cardId, stepIdx, label, state, text) {
+function addStepBlock(bodyId, stepIdx, label, state, text, score) {
   const body = document.getElementById(bodyId);
 
   // Remove skeleton on first real step
@@ -394,10 +887,23 @@ function addStepBlock(bodyId, cardId, stepIdx, label, state, text) {
         <div class="sk" style="height:9px;width:85%"></div>
       </div>`;
   } else {
+    const scoreHtml = (score != null)
+      ? `<span class="step-score">${(score * 100).toFixed(0)}%</span>`
+      : '';
     block.innerHTML = `
-      <div class="step-label"><span class="badge">${esc(label)}</span></div>
-      <div class="step-text">${esc(text)}</div>`;
+      <div class="step-label"><span class="badge">${esc(label)}</span>${scoreHtml}</div>
+      <div class="step-text">${markdownToHtml(text)}</div>`;
   }
+}
+
+function addFinalScoreBlock(bodyId, totalScore) {
+  const body = document.getElementById(bodyId);
+  const existing = body.querySelector('.final-score-block');
+  if (existing) existing.remove();
+  const div = document.createElement('div');
+  div.className = 'final-score-block';
+  div.innerHTML = `<span>Final Score</span><span class="final-score-value">${(totalScore * 100).toFixed(0)}%</span>`;
+  body.appendChild(div);
 }
 
 function showCardError(bodyId, message) {
@@ -405,11 +911,63 @@ function showCardError(bodyId, message) {
     `<div class="card-err">⚠ ${esc(message)}</div>`;
 }
 
+// ── Final summary ─────────────────────────────────────────────────────────────
+
+function renderFinalSummary(taskScores) {
+  // taskScores = [score1, score2, score3] — each 0..1 or null
+  const valid = taskScores.filter(s => s !== null && s !== undefined);
+  if (!valid.length) return;
+
+  const avg = valid.reduce((a, b) => a + b, 0) / valid.length;
+  const pct = s => s != null ? (s * 100).toFixed(0) + '%' : 'N/A';
+
+  let verdictClass, verdictText, verdictDesc;
+  if (avg >= 0.75) {
+    verdictClass = 'verdict-strong';
+    verdictText  = 'STRONG';
+    verdictDesc  = 'This decision has been thoroughly stress-tested. Proceed with the recommended path.';
+  } else if (avg >= 0.55) {
+    verdictClass = 'verdict-moderate';
+    verdictText  = 'MODERATE';
+    verdictDesc  = 'Significant risks identified. Review Task 1 findings before proceeding.';
+  } else {
+    verdictClass = 'verdict-weak';
+    verdictText  = 'WEAK';
+    verdictDesc  = 'Major flaws detected. Reconsider or pivot before committing.';
+  }
+
+  const el = document.getElementById('finalSummary');
+  el.style.display = 'block';
+  el.innerHTML = `
+    <h2>Analysis Complete</h2>
+    <div class="summary-scores">
+      <div class="summary-score-item">
+        <span class="summary-score-label">Task 1</span>
+        <span class="summary-score-value">${pct(taskScores[0])}</span>
+      </div>
+      <div class="summary-score-item">
+        <span class="summary-score-label">Task 2</span>
+        <span class="summary-score-value">${pct(taskScores[1])}</span>
+      </div>
+      <div class="summary-score-item">
+        <span class="summary-score-label">Task 3</span>
+        <span class="summary-score-value">${pct(taskScores[2])}</span>
+      </div>
+    </div>
+    <div class="summary-overall">
+      <div class="summary-big-score">${(avg * 100).toFixed(0)}%</div>
+      <div class="summary-verdict-wrap">
+        <span class="summary-verdict-label">Overall Verdict</span>
+        <span class="summary-verdict ${verdictClass}">${verdictText}</span>
+        <span class="summary-desc">${esc(verdictDesc)}</span>
+      </div>
+    </div>`;
+}
+
 // ── Task runner ───────────────────────────────────────────────────────────────
 
 async function runTask(task, userInput) {
   const { id, bodyId, stepLabels } = task;
-  const cardId = bodyId.replace('b', 'c');
 
   showSkeleton(bodyId);
 
@@ -419,33 +977,80 @@ async function runTask(task, userInput) {
   const analyses = [];
   let done = false;
   let stepIdx = 0;
+  let lastTotalScore = null;
 
   while (!done) {
     const label = stepLabels[stepIdx] || `Step ${stepIdx + 1}`;
-    addStepBlock(bodyId, cardId, stepIdx, label, 'loading');
+    addStepBlock(bodyId, stepIdx, label, 'loading', '', null);
 
-    // Tell the server to run its own LLM — no analysis sent from browser
+    // Server generates LLM analysis when analysis === "AUTO"
     const result = await apiPost('/step', { analysis: 'AUTO' });
 
-    const text = result.analysis || result.observation?.previous_analysis || '';
-    analyses.push({ label, text });
-    addStepBlock(bodyId, cardId, stepIdx, label, 'done', text);
+    // result.analysis is the actual LLM-generated text (server replaces "AUTO")
+    const text  = result.analysis || '';
+    const score = result.reward?.score ?? null;
+    const totalScore = result.reward?.total_episode_score ?? null;
+
+    analyses.push({ label, text, score });
+    addStepBlock(bodyId, stepIdx, label, 'done', text, score);
 
     done = result.done;
     stepIdx++;
+
+    if (totalScore !== null) lastTotalScore = totalScore;
+
+    if (done && lastTotalScore !== null) {
+      addFinalScoreBlock(bodyId, lastTotalScore);
+    }
   }
 
-  return analyses;
+  return { analyses, totalScore: lastTotalScore };
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 async function runAnalysis() {
-  const userInput = document.getElementById('userInput').value.trim();
-  if (!userInput) { alert('Please describe your situation first.'); return; }
+  const userText = document.getElementById('userInput').value.trim();
+  if (!userText) { alert('Please describe your situation first.'); return; }
 
   const btn = document.getElementById('runBtn');
   btn.disabled = true;
+
+  // Hide old enriched section & final summary
+  document.getElementById('enrichedSection').style.display = 'none';
+  document.getElementById('finalSummary').style.display = 'none';
+
+  // Decide whether to call Gemini
+  let enrichedPrompt = userText;
+  const needsGemini = attachedFiles.length > 0 || attachedUrls.length > 0 || userText.length >= 100;
+
+  if (needsGemini) {
+    setStatus('Gemini is reading your content and building a rich prompt…');
+    try {
+      enrichedPrompt = await buildPromptWithGemini(userText, attachedFiles, attachedUrls);
+    } catch(e) {
+      enrichedPrompt = userText;
+    }
+
+    // Show collapsible enriched prompt
+    const sec = document.getElementById('enrichedSection');
+    const content = document.getElementById('enrichedContent');
+    sec.style.display = 'block';
+    content.textContent = enrichedPrompt;
+    content.style.display = 'none';
+
+    const toggle = document.getElementById('enrichedToggle');
+    toggle.onclick = () => {
+      const open = content.style.display !== 'none';
+      content.style.display = open ? 'none' : 'block';
+      toggle.textContent = (open ? '▶' : '▼') + ' Enriched prompt built by Gemini:';
+    };
+  }
+
+  // Show enriched prompt above cards
+  const rid = document.getElementById('runInputDisplay');
+  rid.textContent = enrichedPrompt;
+  rid.style.display = 'block';
 
   // Clear all cards
   TASKS.forEach(t => {
@@ -453,6 +1058,7 @@ async function runAnalysis() {
   });
 
   const outputs = {};
+  const taskScores = [null, null, null];
 
   for (let i = 0; i < TASKS.length; i++) {
     const task = TASKS[i];
@@ -460,8 +1066,9 @@ async function runAnalysis() {
     setStatus(`Running ${label}…`);
 
     try {
-      const analyses = await runTask(task, userInput);
+      const { analyses, totalScore } = await runTask(task, enrichedPrompt);
       outputs[`task${i + 1}`] = analyses.map(a => `[${a.label}]\n${a.text}`).join('\n\n---\n\n');
+      taskScores[i] = totalScore;
     } catch (err) {
       showCardError(task.bodyId, err.message);
       outputs[`task${i + 1}`] = '';
@@ -471,9 +1078,12 @@ async function runAnalysis() {
   setStatus('');
   btn.disabled = false;
 
+  // Render final summary
+  renderFinalSummary(taskScores);
+
   // Persist run
   const run = {
-    input: userInput,
+    input: enrichedPrompt,
     task1: outputs.task1 || '',
     task2: outputs.task2 || '',
     task3: outputs.task3 || '',
@@ -521,6 +1131,10 @@ async function loadHistory() {
 function reloadRun(run) {
   document.getElementById('userInput').value = run.input;
 
+  const rid = document.getElementById('runInputDisplay');
+  rid.textContent = run.input;
+  rid.style.display = 'block';
+
   TASKS.forEach((task, i) => {
     const body = document.getElementById(task.bodyId);
     body.innerHTML = '';
@@ -533,12 +1147,7 @@ function reloadRun(run) {
       const m = block.match(/^\[(.+?)\]\n([\s\S]*)$/);
       const label = m ? m[1] : (task.stepLabels[idx] || `Step ${idx + 1}`);
       const text  = m ? m[2] : block;
-      const div = document.createElement('div');
-      div.className = 'step-block';
-      div.innerHTML = `
-        <div class="step-label"><span class="badge">${esc(label)}</span></div>
-        <div class="step-text">${esc(text)}</div>`;
-      body.appendChild(div);
+      addStepBlock(task.bodyId, idx, label, 'done', text, null);
     });
   });
 }
@@ -567,12 +1176,19 @@ async function renderHistory() {
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 
-document.getElementById('apiUrl').value =
-  JSON.parse(localStorage.getItem('dsim_settings') || '{}').apiUrl || DEFAULT_API;
+// Restore saved API selection
+const savedSettings = JSON.parse(localStorage.getItem('dsim_settings') || '{}');
+if (savedSettings.apiUrl) {
+  const select = document.getElementById('apiSelect');
+  // Find matching option
+  Array.from(select.options).forEach(opt => {
+    if (opt.value === savedSettings.apiUrl) opt.selected = true;
+  });
+}
 
-document.getElementById('apiUrl').addEventListener('change', e => {
+document.getElementById('apiSelect').addEventListener('change', e => {
   const s = JSON.parse(localStorage.getItem('dsim_settings') || '{}');
-  s.apiUrl = e.target.value.trim();
+  s.apiUrl = e.target.value;
   localStorage.setItem('dsim_settings', JSON.stringify(s));
 });
 

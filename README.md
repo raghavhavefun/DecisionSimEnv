@@ -75,6 +75,32 @@ Graded on: timeline simulation, derivative modeling, elasticity analysis, path c
 
 ---
 
+## Web Interface (UI)
+
+The UI at /ui provides a full browser-based interface for testing the environment. It is separate from the hackathon evaluation — judges use the API directly.
+
+### UI Features
+- Gemini-powered prompt builder: upload files, images, PDFs, screenshots, or paste URLs alongside your situation. Gemini reads all content and builds a rich detailed prompt automatically.
+- File and URL attachments: attach any file type or URL as additional context
+- API selector: switch between HuggingFace Live and Local Server
+- Markdown rendering: all AI outputs rendered as formatted text with tables
+- Per-step scores: each step shows its score as a percentage
+- Final summary: overall score and verdict after all 3 tasks complete
+- Recent runs: last 20 analyses saved and reloadable
+
+### APIs Used in UI (separate from hackathon environment)
+| API | Purpose |
+|-----|---------|
+| Gemini 2.0 Flash | Reads uploaded files and builds rich prompts |
+
+### Environment Variables
+Add to your .env file:
+```
+GEMINI_API_KEY=your_gemini_key_here   # UI only — prompt builder
+```
+
+---
+
 ## Baseline Scores
 
 | Task | Average Score |
@@ -122,12 +148,16 @@ pip install -r requirements.txt
 ```
 
 Create a `.env` file in the root directory:
+```
 API_BASE_URL=https://api.groq.com/openai/v1
 MODEL_NAME=llama-3.3-70b-versatile
 OPENAI_API_KEY=your_groq_key_here
+HF_TOKEN=your_huggingface_token
 TAVILY_API_KEY=your_tavily_key_here
 NEWS_API_KEY=your_newsapi_key_here
 ALPHA_VANTAGE_KEY=your_alpha_vantage_key_here
+GEMINI_API_KEY=your_gemini_key_here   # UI only
+```
 
 Start the server:
 ```bash
