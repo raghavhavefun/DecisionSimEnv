@@ -626,6 +626,7 @@ let attachedUrls  = [];
 
 const GEMINI_API_KEY = 'AIzaSyAovrS7F8uReZcRpMfkUFg1Tl8RwX65b8o';
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${GEMINI_API_KEY}`;
+const GEMINI_FLASH_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
 const GEMINI_SYSTEM = `You are the intake processor for DecisionSimEnv — an AI decision simulation system that stress-tests any decision through 3 mathematical tasks using Bayesian probability, differential equations, and regret minimization.
 
@@ -734,7 +735,7 @@ Rules:
 
   console.log('Calling Gemini with', parts.length, 'parts');
 
-  const response = await fetch(GEMINI_URL, {
+  const response = await fetch(GEMINI_FLASH_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
