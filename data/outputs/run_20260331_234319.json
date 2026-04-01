@@ -1,0 +1,8 @@
+{
+  "id": "20260331_234319",
+  "timestamp": "2026-03-31T23:43:19.114260",
+  "user_input": "I am a 38 year old angel investor based in Mumbai. I have Rs 2 crore \navailable to deploy this year across 3-4 deals. A founder reached out \nto me last week asking for Rs 45L for 9% equity in their company. \nThey sent me their pitch deck and financials. I have done 6 investments \nbefore \u2014 2 failed, 3 are doing okay, 1 gave me 4x returns. \nI am cautious with money. Should I invest in this company?",
+  "task1_output": "[Goal & Context Extraction]\n\n\n---\n\n[Weakness Analysis]\n",
+  "task2_output": "[Scenario Mapping]\n\n\n---\n\n[Probability & Impact Analysis]\n",
+  "task3_output": "[Timeline Simulation]\n\n\n---\n\n[Stress Testing]\n\n\n---\n\n[Final Verdict]\n"
+}
