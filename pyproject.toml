@@ -1,5 +1,5 @@
 [project]
-name = "decisionsimenv"
+name = "openenv-decisionsimenv"
 version = "1.0.0"
 description = "Universal Decision Stress-Tester — OpenEnv Hackathon"
 requires-python = ">=3.11"
