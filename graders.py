@@ -102,19 +102,31 @@ def score_task1_step2(analysis: str) -> Dict:
     breakdown = {}
 
     # Pros table quality
-    pros_count = len(re.findall(r'pro\s*\d*\s*[:\|]|advantage\s*\d*\s*[:\|]|\|\s*pro', text))
-    breakdown["pros_table"] = round(min(pros_count / 4, 1.0), 2)
+    pros_count = len(re.findall(
+        r'pro\s*\d*\s*[:\|]|advantage\s*\d*\s*[:\|]|\|\s*pro|strength|benefit|opportunity|upside',
+        text
+    ))
+    breakdown["pros_table"] = round(min(pros_count / 3, 1.0), 2)
 
     # Cons table quality
-    cons_count = len(re.findall(r'con\s*\d*\s*[:\|]|disadvantage\s*\d*\s*[:\|]|\|\s*con', text))
-    breakdown["cons_table"] = round(min(cons_count / 4, 1.0), 2)
+    cons_count = len(re.findall(
+        r'con\s*\d*\s*[:\|]|disadvantage\s*\d*\s*[:\|]|\|\s*con|weakness|risk|challenge|downside|threat',
+        text
+    ))
+    breakdown["cons_table"] = round(min(cons_count / 3, 1.0), 2)
 
     # Confidence levels mentioned
-    has_confidence = any(w in text for w in ["high", "medium", "low", "confidence"])
+    has_confidence = any(w in text for w in [
+        "high", "medium", "low", "confidence",
+        "likely", "unlikely", "certain", "probable"
+    ])
     breakdown["confidence_levels"] = 1.0 if has_confidence else 0.0
 
     # Severity scores (1-10 scale)
-    has_severity = bool(re.search(r'\b([1-9]|10)\s*/\s*10\b|\bscale\b', text))
+    has_severity = bool(re.search(
+        r'\b([1-9]|10)\s*/\s*10\b|\bscale\b|\bseverity\b|\bimpact\b|\bcritical\b|\bminor\b|\bmajor\b',
+        text
+    ))
     breakdown["severity_scores"] = 1.0 if has_severity else 0.0
 
     # Biggest blind spot present
@@ -130,8 +142,11 @@ def score_task1_step2(analysis: str) -> Dict:
     breakdown["critical_question"] = 1.0 if has_question else 0.0
 
     # Real numbers still present
-    number_count = len(re.findall(r'\b\d+(?:\.\d+)?(?:\s*%|\s*rs|\s*l\b|\s*cr\b|\s*lakhs?|\s*crores?)', text))
-    breakdown["specificity"] = round(min(number_count / 4, 1.0), 2)
+    number_count = len(re.findall(
+        r'\b\d+(?:\.\d+)?(?:\s*%|\s*rs|\s*l\b|\s*cr\b|\s*lakhs?|\s*crores?|\s*users?|\s*months?)',
+        text
+    ))
+    breakdown["specificity"] = round(min(number_count / 3, 1.0), 2)
 
     weights = {
         "pros_table": 0.20,
@@ -275,13 +290,16 @@ def score_task2_step2(analysis: str) -> Dict:
 
     # Regret scores present
     has_regret = any(phrase in text for phrase in [
-        "regret", "regret score", "max regret", "regret ="
+        "regret", "regret score", "max regret", "regret =",
+        "worst outcome", "missed opportunity", "opportunity cost"
     ])
     breakdown["regret_scores"] = 1.0 if has_regret else 0.0
 
     # Reversibility mentioned
     has_reversible = any(phrase in text for phrase in [
-        "reversible", "irreversible", "undo", "reverse", "reversibility"
+        "reversible", "irreversible", "undo", "reverse", "reversibility",
+        "can be undone", "cannot be undone", "permanent", "temporary",
+        "exit", "back out", "change course"
     ])
     breakdown["reversibility"] = 1.0 if has_reversible else 0.0
 
@@ -411,7 +429,10 @@ def score_task3_step2(analysis: str) -> Dict:
     breakdown = {}
 
     # Alignment score stated
-    has_alignment_score = bool(re.search(r'alignment\s+score\s*[=:]\s*\d+|alignment\s*:\s*\d+\s*/\s*10|\d+\s+out\s+of\s+10', text))
+    has_alignment_score = bool(re.search(
+        r'alignment\s+score\s*[=:]\s*\d+|alignment\s*:\s*\d+\s*/\s*10|\d+\s+out\s+of\s+10|score\s*[=:]\s*\d+\s*/\s*10|\d+/10',
+        text
+    ))
     breakdown["alignment_score"] = 1.0 if has_alignment_score else 0.0
 
     # Gap analysis present
