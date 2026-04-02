@@ -91,7 +91,8 @@ The UI at /ui provides a full browser-based interface for testing the environmen
 ### APIs Used in UI (separate from hackathon environment)
 | API | Purpose |
 |-----|---------|
-| Gemini 2.0 Flash | Reads uploaded files and builds rich prompts |
+| Gemini 1.5 Flash | Reads uploaded PDFs and files, builds rich detailed prompts |
+| Gemini 2.5 Pro | Generates conclusive paragraph after all 3 tasks complete |
 
 ### Environment Variables
 Add to your .env file:
@@ -103,11 +104,12 @@ GEMINI_API_KEY=AIza****
 
 ## Baseline Scores
 
-| Task | Average Score |
-|------|--------------|
-| Task 1 — Diagnose | 0.71 |
-| Task 2 — Map Futures | 0.83 |
-| Task 3 — Simulate | Pending full run |
+| Task | Average Score | Step Breakdown |
+|------|--------------|----------------|
+| Task 1 — Diagnose | 0.62 | Step 1: 0.85 / Step 2: 0.52 |
+| Task 2 — Map Futures | 0.84 | Step 1: 0.78 / Step 2: 0.88 |
+| Task 3 — Simulate | 0.76 | Step 1: 0.84 / Step 2: 0.70 / Step 3: 0.77 |
+| Overall Average | 0.74 | Across all 3 tasks and 7 steps |
 
 ---
 
@@ -125,18 +127,24 @@ GEMINI_API_KEY=AIza****
 
 ## Project Structure
 DecisionSimEnv/
-├── environment.py      Main environment — reset() step() state() + all API calls
-├── graders.py          Scoring logic for all 3 tasks
-├── math_graders.py     Real mathematical scoring — Bayesian, Shannon entropy, derivatives, elasticity, regret
-├── inference.py        Baseline inference script required by hackathon
-├── models.py           Pydantic typed models — Observation, Action, Reward, EnvironmentState
-├── test_cases.py       5 test cases and all 7 task step instruction prompts
-├── app.py              FastAPI wrapper with all endpoints
-├── storage.py          Run storage and history
-├── openenv.yaml        OpenEnv spec configuration file
-├── Dockerfile          Container for deployment
-├── requirements.txt    Python dependencies
-└── ui.html             Web interface
+├── app.py                  Main FastAPI server — all endpoints
+├── environment.py          Core environment — reset() step() state() + all API calls
+├── graders.py              Step-specific graders for all 7 steps
+├── math_graders.py         Mathematical scoring — Bayesian, Shannon entropy, derivatives, elasticity, regret
+├── inference.py            Baseline inference script required by hackathon
+├── models.py               Pydantic typed models — Observation, Action, Reward, EnvironmentState
+├── test_cases.py           5 test cases and all 7 task step instruction prompts
+├── storage.py              Run storage and history
+├── openenv.yaml            OpenEnv spec configuration file
+├── pyproject.toml          Package config with all dependencies and server entry point
+├── uv.lock                 Locked dependency versions for reproducible builds
+├── Dockerfile              Container for HuggingFace deployment
+├── requirements.txt        Python dependencies
+├── ui.html                 Web interface with Gemini prompt builder
+└── server/
+    ├── __init__.py         Makes server a Python package
+    ├── app.py              Server entry point with main() function
+    └── Dockerfile          Server-specific Dockerfile
 
 ---
 
@@ -145,6 +153,12 @@ DecisionSimEnv/
 git clone https://huggingface.co/spaces/ragarwal023/DecisionSimEnv
 cd DecisionSimEnv
 pip install -r requirements.txt
+```
+
+Also run openenv validation:
+```bash
+pip install openenv-core
+openenv validate --verbose
 ```
 
 Create a `.env` file in the root directory:
@@ -221,6 +235,19 @@ curl -X POST https://ragarwal023-decisionsimenv.hf.space/step \
 | Deployed to HuggingFace Spaces tagged openenv | Done |
 | Inference runtime under 20 minutes | Done |
 | Runs on 2 vCPU 8GB RAM no GPU | Done |
+
+---
+
+## OpenEnv Validation
+```
+openenv validate --verbose
+[OK] DecisionSimEnv: Ready for multi-mode deployment
+Supported deployment modes:
+[YES] docker
+[YES] openenv_serve
+[YES] uv_run
+[YES] python_module
+```
 
 ---
 
