@@ -675,39 +675,26 @@ async function fileToBase64(file) {
 }
 
 async function buildPromptWithGemini(userText, files, urls) {
-  console.log('buildPromptWithGemini called with', files.length, 'files');
-
   const parts = [];
 
-  const systemPrompt = `You are a document analyst for a decision simulation system.
+  parts.push({ text: `You are a document analyst. Read everything below carefully.
 
-Read everything provided carefully — the user's situation, all uploaded files, all images, all documents.
-
-Extract EVERY single piece of data from every file:
+Extract EVERY piece of data from every file:
 - Every number, percentage, financial figure
-- Every person's name and their background
-- Every company mentioned and what they do
+- Every person name and background
+- Every company and what they do
 - Every date and timeline
-- Every claim, metric, or statistic
-- Every table row and column
-- Every bullet point
-- Every risk mentioned
-- Every product, price, and margin
+- Every risk, metric, statistic
+- Every table row, bullet point
 
-Then write ONE single massive detailed prompt combining:
-1. The user's original situation
+Then write ONE massive detailed prompt combining:
+1. The user original situation
 2. ALL data extracted from every file
-3. Context about what kind of decision this is
+3. Context about this type of decision
 
-Rules:
-- Write in first person as if the user is speaking
-- Include every single number and name exactly as found
-- Do not summarize — include everything
-- Do not use headers or bullet points in output
-- Output should be extremely long and detailed — minimum 500 words
-- Output ONLY the combined prompt, nothing else`;
+Rules: first person, include every number and name exactly,
+minimum 500 words, output ONLY the combined prompt.` });
 
-  parts.push({ text: systemPrompt });
   parts.push({ text: 'USER SITUATION:\n' + userText });
 
   if (urls.length > 0) {
@@ -716,49 +703,69 @@ Rules:
 
   for (const file of files) {
     try {
-      console.log('Processing file:', file.name, 'type:', file.type, 'size:', file.size);
-      const base64 = await fileToBase64(file);
-      const mimeType = file.type || 'application/pdf';
-      parts.push({
-        inlineData: {
-          mimeType: mimeType,
-          data: base64
+      if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+        // Use File API for PDFs
+        const uploadUrl = `https://generativelanguage.googleapis.com/upload/v1beta/files?uploadType=multipart&key=${GEMINI_API_KEY}`;
+        const metadata = JSON.stringify({ file: { display_name: file.name, mimeType: 'application/pdf' } });
+        const formData = new FormData();
+        formData.append('metadata', new Blob([metadata], { type: 'application/json' }));
+        formData.append('file', file, file.name);
+
+        const uploadResp = await fetch(uploadUrl, { method: 'POST', body: formData });
+        const uploadData = await uploadResp.json();
+        const fileUri = uploadData.file?.uri;
+        const fileName = uploadData.file?.name;
+
+        if (fileUri && fileName) {
+          // Poll until ACTIVE
+          const checkUrl = `https://generativelanguage.googleapis.com/v1beta/${fileName}?key=${GEMINI_API_KEY}`;
+          let active = false;
+          for (let i = 0; i < 15; i++) {
+            await new Promise(r => setTimeout(r, 2000));
+            const checkResp = await fetch(checkUrl);
+            const checkData = await checkResp.json();
+            if (checkData.state === 'ACTIVE') { active = true; break; }
+            if (checkData.state === 'FAILED') break;
+          }
+          if (active) {
+            parts.push({ fileData: { mimeType: 'application/pdf', fileUri: fileUri } });
+            parts.push({ text: `Above is PDF file: ${file.name}. Extract ALL data from it.` });
+          } else {
+            parts.push({ text: `PDF file ${file.name} could not be processed.` });
+          }
         }
-      });
-      parts.push({ text: 'The above file is named: ' + file.name + '. Extract ALL data from it.' });
-      console.log('File added to parts successfully:', file.name);
+      } else {
+        // Images and other files use inline base64
+        const base64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result.split(',')[1]);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+        parts.push({ inlineData: { mimeType: file.type || 'image/png', data: base64 } });
+        parts.push({ text: `Above is file: ${file.name}. Extract ALL data from it.` });
+      }
     } catch(e) {
-      console.error('File processing error:', file.name, e);
-      parts.push({ text: 'User uploaded file: ' + file.name + ' (could not read)' });
+      console.error('File error:', file.name, e);
+      parts.push({ text: `File ${file.name} could not be read.` });
     }
   }
-
-  console.log('Calling Gemini with', parts.length, 'parts');
 
   const response = await fetch(GEMINI_FLASH_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       contents: [{ parts }],
-      generationConfig: {
-        maxOutputTokens: 8192,
-        temperature: 0.3
-      }
+      generationConfig: { maxOutputTokens: 8192, temperature: 0.3 }
     })
   });
 
   const data = await response.json();
-  console.log('Gemini response status:', response.status);
-  console.log('Gemini response:', JSON.stringify(data).substring(0, 500));
-
   if (data.error) {
     console.error('Gemini error:', data.error);
     return userText;
   }
-
-  const result = data.candidates?.[0]?.content?.parts?.[0]?.text || userText;
-  console.log('Enriched prompt length:', result.length, 'characters');
-  return result;
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || userText;
 }
 
 async function generateConclusion(userInput, task1Text, task2Text, task3Text, overallScore) {
