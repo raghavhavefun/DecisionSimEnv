@@ -502,13 +502,28 @@ def score_task3_step3(analysis: str) -> Dict:
 
     # PROCEED / DO NOT PROCEED / PIVOT TO verdict
     has_verdict = any(phrase in text for phrase in [
-        "proceed:", "do not proceed:", "pivot to:", "proceed —", "do not proceed —", "pivot to —"
+        "proceed:", "do not proceed:", "pivot to:",
+        "proceed —", "do not proceed —", "pivot to —",
+        "proceed\n", "do not proceed\n", "pivot to\n",
+        "recommendation: proceed", "recommendation: do not",
+        "final verdict: proceed", "final verdict: do not",
+        "i recommend proceeding", "i recommend not proceeding",
+        "should proceed", "should not proceed",
+        "verdict: proceed", "verdict: pivot",
+        "proceed with", "do not proceed with",
+        "my recommendation is to proceed",
+        "my recommendation is to not proceed",
+        "my recommendation is to pivot"
     ])
     breakdown["clear_verdict"] = 1.0 if has_verdict else 0.0
 
     # Action plan present
     has_action = any(phrase in text for phrase in [
-        "this week", "days 1-7", "month 1", "first step", "action plan"
+        "this week", "days 1-7", "month 1", "first step",
+        "action plan", "next 7 days", "next 30 days",
+        "immediately", "right now", "start by",
+        "week 1", "week one", "first thing",
+        "action items", "next steps", "step 1"
     ])
     breakdown["action_plan"] = 1.0 if has_action else 0.0
 
@@ -526,8 +541,11 @@ def score_task3_step3(analysis: str) -> Dict:
 
     # Kill factor or critical assumption
     has_kill = any(phrase in text for phrase in [
-        "will kill", "if skipped", "critical assumption", "validate before",
-        "one thing", "most important"
+        "will kill", "if skipped", "critical assumption",
+        "validate before", "one thing", "most important",
+        "single most", "biggest risk", "key risk",
+        "must not", "cannot skip", "non-negotiable",
+        "dealbreaker", "deal breaker", "make or break"
     ])
     breakdown["kill_factor"] = 1.0 if has_kill else 0.0
 
