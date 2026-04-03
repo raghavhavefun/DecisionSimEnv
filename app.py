@@ -22,8 +22,9 @@ env = DecisionSimEnv()
 
 
 class ResetRequest(BaseModel):
-    task_id: str
-    user_input: str
+    task_id: str = "task1_autopsy"
+    user_input: str = "Default test case for environment validation"
+    domain: str = "business"
 
 
 class StepRequest(BaseModel):
@@ -49,7 +50,25 @@ def root():
 @app.post("/reset")
 def reset(req: ResetRequest):
     try:
-        obs = env.reset(task_id=req.task_id, user_input=req.user_input)
+        # Use defaults if empty strings provided
+        task_id = req.task_id if req.task_id else "task1_autopsy"
+        user_input = req.user_input if req.user_input else "Default test case for environment validation"
+        domain = req.domain if req.domain else "business"
+
+        obs = env.reset(task_id=task_id, user_input=user_input, domain=domain)
+        return obs.model_dump()
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.get("/reset")
+def reset_get():
+    try:
+        obs = env.reset(
+            task_id="task1_autopsy",
+            user_input="Default test case for environment validation",
+            domain="business"
+        )
         return obs.model_dump()
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
