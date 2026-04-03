@@ -674,98 +674,132 @@ async function fileToBase64(file) {
   });
 }
 
+async function extractFileText(file) {
+  return new Promise((resolve) => {
+    if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          if (!window.pdfjsLib) {
+            await new Promise((res, rej) => {
+              const script = document.createElement('script');
+              script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+              script.onload = res;
+              script.onerror = rej;
+              document.head.appendChild(script);
+            });
+            window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+              'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+          }
+          const typedArray = new Uint8Array(e.target.result);
+          const pdf = await window.pdfjsLib.getDocument(typedArray).promise;
+          let text = `PDF DOCUMENT: ${file.name}\nTotal pages: ${pdf.numPages}\n\n`;
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const content = await page.getTextContent();
+            text += `--- PAGE ${i} ---\n`;
+            text += content.items.map(item => item.str).join(' ') + '\n\n';
+          }
+          resolve({ type: 'pdf', name: file.name, text: text });
+        } catch(err) {
+          resolve({ type: 'pdf', name: file.name, text: `PDF ${file.name} could not be read.` });
+        }
+      };
+      reader.onerror = () => resolve({ type: 'pdf', name: file.name, text: `PDF ${file.name} read error.` });
+      reader.readAsArrayBuffer(file);
+    } else if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = () => resolve({
+        type: 'image',
+        name: file.name,
+        mimeType: file.type,
+        base64: reader.result.split(',')[1]
+      });
+      reader.onerror = () => resolve({ type: 'image', name: file.name, text: `Image ${file.name} read error.` });
+      reader.readAsDataURL(file);
+    } else {
+      const reader = new FileReader();
+      reader.onload = () => resolve({ type: 'text', name: file.name, text: `FILE: ${file.name}\n${reader.result}` });
+      reader.onerror = () => resolve({ type: 'text', name: file.name, text: `File ${file.name} read error.` });
+      reader.readAsText(file);
+    }
+  });
+}
+
 async function buildPromptWithGemini(userText, files, urls) {
-  const parts = [];
-
-  parts.push({ text: `You are a document analyst. Read everything below carefully.
-
-Extract EVERY piece of data from every file:
-- Every number, percentage, financial figure
-- Every person name and background
-- Every company and what they do
-- Every date and timeline
-- Every risk, metric, statistic
-- Every table row, bullet point
-
-Then write ONE massive detailed prompt combining:
-1. The user original situation
-2. ALL data extracted from every file
-3. Context about this type of decision
-
-Rules: first person, include every number and name exactly,
-minimum 500 words, output ONLY the combined prompt.` });
-
-  parts.push({ text: 'USER SITUATION:\n' + userText });
-
-  if (urls.length > 0) {
-    parts.push({ text: 'REFERENCED URLS:\n' + urls.join('\n') });
-  }
-
+  // Step 1 — Extract all file contents locally first
+  const extractedFiles = [];
   for (const file of files) {
     try {
-      if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
-        // Use File API for PDFs
-        const uploadUrl = `https://generativelanguage.googleapis.com/upload/v1beta/files?uploadType=multipart&key=${GEMINI_API_KEY}`;
-        const metadata = JSON.stringify({ file: { display_name: file.name, mimeType: 'application/pdf' } });
-        const formData = new FormData();
-        formData.append('metadata', new Blob([metadata], { type: 'application/json' }));
-        formData.append('file', file, file.name);
-
-        const uploadResp = await fetch(uploadUrl, { method: 'POST', body: formData });
-        const uploadData = await uploadResp.json();
-        const fileUri = uploadData.file?.uri;
-        const fileName = uploadData.file?.name;
-
-        if (fileUri && fileName) {
-          // Poll until ACTIVE
-          const checkUrl = `https://generativelanguage.googleapis.com/v1beta/${fileName}?key=${GEMINI_API_KEY}`;
-          let active = false;
-          for (let i = 0; i < 15; i++) {
-            await new Promise(r => setTimeout(r, 2000));
-            const checkResp = await fetch(checkUrl);
-            const checkData = await checkResp.json();
-            if (checkData.state === 'ACTIVE') { active = true; break; }
-            if (checkData.state === 'FAILED') break;
-          }
-          if (active) {
-            parts.push({ fileData: { mimeType: 'application/pdf', fileUri: fileUri } });
-            parts.push({ text: `Above is PDF file: ${file.name}. Extract ALL data from it.` });
-          } else {
-            parts.push({ text: `PDF file ${file.name} could not be processed.` });
-          }
-        }
-      } else {
-        // Images and other files use inline base64
-        const base64 = await new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result.split(',')[1]);
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
-        });
-        parts.push({ inlineData: { mimeType: file.type || 'image/png', data: base64 } });
-        parts.push({ text: `Above is file: ${file.name}. Extract ALL data from it.` });
-      }
+      const extracted = await extractFileText(file);
+      extractedFiles.push(extracted);
     } catch(e) {
-      console.error('File error:', file.name, e);
-      parts.push({ text: `File ${file.name} could not be read.` });
+      extractedFiles.push({ type: 'text', name: file.name, text: `File ${file.name} could not be read.` });
     }
   }
 
+  // Step 2 — Build Gemini parts with everything
+  const parts = [];
+
+  // System instruction
+  parts.push({ text: `You are the intake processor for DecisionSimEnv — an AI decision simulation system.
+
+Your job is to read the user's situation, all extracted PDF text, all images, and all file contents below.
+Then write ONE single massive detailed prompt that will be used to stress-test this decision.
+
+The output prompt must:
+- Be written in first person as if the user is speaking to the world's best decision analyst
+- Include EVERY number, name, company, date, financial figure exactly as found in the files
+- Include ALL data from PDFs — every table row, every bullet point, every metric
+- Include descriptions of what images show — every detail visible
+- Add relevant market context, comparable cases, and what the numbers actually mean
+- Be extremely long and detailed — minimum 800 words, no upper limit
+- Sound like a complete briefing document not a summary
+- Output ONLY the enriched prompt — no preamble, no headers, no explanation
+
+USER SITUATION:
+${userText}
+
+${urls.length > 0 ? 'REFERENCED URLS:\n' + urls.join('\n') + '\n\n' : ''}${extractedFiles.filter(f => f.type !== 'image').map(f => f.text).join('\n\n---FILE SEPARATOR---\n\n')}` });
+
+  // Add images as inlineData so Gemini can see them
+  for (const f of extractedFiles) {
+    if (f.type === 'image' && f.base64) {
+      parts.push({
+        inlineData: {
+          mimeType: f.mimeType,
+          data: f.base64
+        }
+      });
+      parts.push({ text: `Above image is named: ${f.name}. Extract and describe EVERY detail visible — all text, numbers, names, conversations, data, emotions, patterns. Include it all in the output prompt.` });
+    }
+  }
+
+  // Step 3 — Call Gemini with everything
   const response = await fetch(GEMINI_FLASH_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       contents: [{ parts }],
-      generationConfig: { maxOutputTokens: 8192, temperature: 0.3 }
+      generationConfig: {
+        maxOutputTokens: 8192,
+        temperature: 0.4
+      }
     })
   });
 
   const data = await response.json();
+
   if (data.error) {
     console.error('Gemini error:', data.error);
-    return userText;
+    // Fallback — return extracted text directly as prompt
+    const fallback = `${userText}\n\n${extractedFiles.map(f => f.text || '').join('\n\n')}`;
+    return fallback;
   }
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || userText;
+
+  const result = data.candidates?.[0]?.content?.parts?.[0]?.text || userText;
+  console.log('Enriched prompt length:', result.length, 'characters');
+  return result;
 }
 
 async function generateConclusion(userInput, task1Text, task2Text, task3Text, overallScore) {
