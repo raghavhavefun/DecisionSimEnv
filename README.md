@@ -91,8 +91,8 @@ The UI at /ui provides a full browser-based interface for testing the environmen
 ### APIs Used in UI (separate from hackathon environment)
 | API | Purpose |
 |-----|---------|
-| Gemini 1.5 Flash | Reads uploaded PDFs and files, builds rich detailed prompts |
-| Gemini 2.5 Pro | Generates conclusive paragraph after all 3 tasks complete |
+| Gemini 2.0 Flash | Reads uploaded PDFs using PDF.js, reads images using VLM, builds rich detailed prompts |
+| Gemini 2.0 Flash | Generates conclusive paragraph after all 3 tasks complete |
 
 ### Environment Variables
 Add to your .env file:
@@ -106,10 +106,10 @@ GEMINI_API_KEY=AIza****
 
 | Task | Average Score | Step Breakdown |
 |------|--------------|----------------|
-| Task 1 — Diagnose | 0.62 | Step 1: 0.85 / Step 2: 0.52 |
-| Task 2 — Map Futures | 0.84 | Step 1: 0.78 / Step 2: 0.88 |
-| Task 3 — Simulate | 0.76 | Step 1: 0.84 / Step 2: 0.70 / Step 3: 0.77 |
-| Overall Average | 0.74 | Across all 3 tasks and 7 steps |
+| Task 1 — Diagnose | 0.82 | Step 1: 0.85 / Step 2: 0.81 |
+| Task 2 — Map Futures | 0.81 | Step 1: 0.78 / Step 2: 0.89 |
+| Task 3 — Simulate | 0.65 | Step 1: 0.85 / Step 2: 0.70 / Step 3: 0.55 |
+| Overall Average | 0.76 | Across all 3 tasks and 7 steps |
 
 ---
 
