@@ -1,6 +1,6 @@
 import os
 import asyncio
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
@@ -48,12 +48,17 @@ def root():
 
 
 @app.post("/reset")
-def reset(req: ResetRequest):
+async def reset(request: Request):
     try:
-        # Use defaults if empty strings provided
-        task_id = req.task_id if req.task_id else "task1_autopsy"
-        user_input = req.user_input if req.user_input else "Default test case for environment validation"
-        domain = req.domain if req.domain else "business"
+        # Try to parse body, use defaults if empty or missing
+        try:
+            body = await request.json()
+        except Exception:
+            body = {}
+
+        task_id = body.get("task_id", "task1_autopsy") if body else "task1_autopsy"
+        user_input = body.get("user_input", "Default test case for environment validation") if body else "Default test case for environment validation"
+        domain = body.get("domain", "business") if body else "business"
 
         obs = env.reset(task_id=task_id, user_input=user_input, domain=domain)
         return obs.model_dump()
