@@ -148,40 +148,206 @@ DecisionSimEnv/
 
 ---
 
-## Setup and Running Locally
+## Installation and Setup
+
+### Option 1 — Run from HuggingFace (No Installation)
+
+The environment is live at:
+https://ragarwal023-decisionsimenv.hf.space
+
+Test it immediately:
 ```bash
-git clone https://huggingface.co/spaces/ragarwal023/DecisionSimEnv
+# Health check
+curl https://ragarwal023-decisionsimenv.hf.space/health
+
+# Run a full episode
+curl -X POST https://ragarwal023-decisionsimenv.hf.space/reset \
+  -H "Content-Type: application/json" \
+  -d '{"task_id": "task1_autopsy", "user_input": "I want to build an AI tutoring app for tier 2 cities in India targeting 10000 users at Rs 199 per month."}'
+
+curl -X POST https://ragarwal023-decisionsimenv.hf.space/step \
+  -H "Content-Type: application/json" \
+  -d '{"analysis": "AUTO"}'
+```
+
+Open the web interface at:
+https://ragarwal023-decisionsimenv.hf.space/ui
+
+---
+
+### Option 2 — Run Locally from GitHub
+
+**Requirements:**
+- Python 3.11 or higher
+- pip
+
+**Step 1 — Clone the repository:**
+```bash
+git clone https://github.com/raghavhavefun/DecisionSimEnv.git
 cd DecisionSimEnv
+```
+
+**Step 2 — Create virtual environment:**
+```bash
+# Windows
+python -m venv venv
+venv\Scripts\activate
+
+# Mac/Linux
+python -m venv venv
+source venv/bin/activate
+```
+
+**Step 3 — Install dependencies:**
+```bash
 pip install -r requirements.txt
 ```
 
-Also run openenv validation:
-```bash
-pip install openenv-core
-openenv validate --verbose
-```
-
-Create a `.env` file in the root directory:
-```
+**Step 4 — Create .env file in the root directory:**
 API_BASE_URL=https://api.groq.com/openai/v1
 MODEL_NAME=llama-3.3-70b-versatile
-OPENAI_API_KEY=gsk_****
-HF_TOKEN=hf_****
-TAVILY_API_KEY=tvly-****
-NEWS_API_KEY=7b9a-****
-ALPHA_VANTAGE_KEY=0YII****
-GEMINI_API_KEY=AIza****
-```
+OPENAI_API_KEY=your_groq_api_key_here
+HF_TOKEN=your_huggingface_token_here
+TAVILY_API_KEY=your_tavily_key_here
+NEWS_API_KEY=your_newsapi_key_here
+ALPHA_VANTAGE_KEY=your_alpha_vantage_key_here
+GEMINI_API_KEY=your_gemini_key_here
 
-Start the server:
+Get your free API keys from:
+- Groq: https://console.groq.com — free tier gives 100K tokens per day
+- Tavily: https://tavily.com — free tier gives 1000 searches per month
+- NewsAPI: https://newsapi.org — free tier gives 100 requests per day
+- Alpha Vantage: https://alphavantage.co — free tier gives 25 requests per day
+- Gemini: https://aistudio.google.com — free tier gives 1500 requests per day
+- HuggingFace: https://huggingface.co/settings/tokens — free
+
+**Step 5 — Start the server:**
 ```bash
 uvicorn app:app --reload
 ```
 
-Run the baseline inference:
+Server runs at http://localhost:8000
+
+**Step 6 — Open the web interface:**
+
+Go to http://localhost:8000/ui in your browser.
+
+**Step 7 — Run baseline inference:**
 ```bash
 python inference.py
 ```
+
+---
+
+## Using the Backend API
+
+### Running a Full Episode via API
+
+A full episode has 3 tasks. Each task must be run separately. Each task has multiple steps.
+
+**Task 1 — Diagnose (2 steps):**
+```bash
+# Step 1: Reset
+curl -X POST http://localhost:8000/reset \
+  -H "Content-Type: application/json" \
+  -d '{"task_id": "task1_autopsy", "user_input": "Your situation here"}'
+
+# Step 2: Run step 1 (AUTO lets the server call the LLM)
+curl -X POST http://localhost:8000/step \
+  -H "Content-Type: application/json" \
+  -d '{"analysis": "AUTO"}'
+
+# Step 3: Run step 2
+curl -X POST http://localhost:8000/step \
+  -H "Content-Type: application/json" \
+  -d '{"analysis": "AUTO"}'
+```
+
+**Task 2 — Map Futures (2 steps):**
+```bash
+curl -X POST http://localhost:8000/reset \
+  -H "Content-Type: application/json" \
+  -d '{"task_id": "task2_scenarios", "user_input": "Your situation here"}'
+
+curl -X POST http://localhost:8000/step -H "Content-Type: application/json" -d '{"analysis": "AUTO"}'
+curl -X POST http://localhost:8000/step -H "Content-Type: application/json" -d '{"analysis": "AUTO"}'
+```
+
+**Task 3 — Simulate (3 steps):**
+```bash
+curl -X POST http://localhost:8000/reset \
+  -H "Content-Type: application/json" \
+  -d '{"task_id": "task3_simulation", "user_input": "Your situation here"}'
+
+curl -X POST http://localhost:8000/step -H "Content-Type: application/json" -d '{"analysis": "AUTO"}'
+curl -X POST http://localhost:8000/step -H "Content-Type: application/json" -d '{"analysis": "AUTO"}'
+curl -X POST http://localhost:8000/step -H "Content-Type: application/json" -d '{"analysis": "AUTO"}'
+```
+
+### Checking State
+```bash
+curl http://localhost:8000/state
+```
+
+### Using Your Own AI Response
+Instead of AUTO you can provide your own analysis:
+```bash
+curl -X POST http://localhost:8000/step \
+  -H "Content-Type: application/json" \
+  -d '{"analysis": "Your AI generated analysis here..."}'
+```
+
+---
+
+## Using the Web Interface
+
+1. Open http://localhost:8000/ui
+2. Type your decision situation in the text box — be specific with numbers, constraints, and goals
+3. Optionally attach files — PDFs are read by PDF.js, images are read by Gemini VLM
+4. Optionally add URLs for additional context
+5. Select API — Local Server for local testing, HuggingFace Live for production
+6. Click Run Analysis
+7. Watch all 3 tasks run in parallel cards
+8. Read the conclusive paragraph at the bottom
+
+---
+
+## Common Errors and Solutions
+
+### Error: OPENAI_API_KEY not set
+Solution: Make sure your .env file exists in the root directory
+and contains OPENAI_API_KEY=your_groq_key
+
+### Error: Rate limit reached for llama-3.3-70b-versatile
+Solution: Groq free tier allows 100K tokens per day.
+Wait until 5:30 AM IST for the limit to reset.
+Or upgrade to Groq Dev tier at console.groq.com/settings/billing
+
+### Error: 400 Bad Request on /step
+Solution: You must call /reset before /step.
+Each task needs its own reset call.
+
+### Error: Tavily search returning empty
+Solution: Check TAVILY_API_KEY in your .env file.
+Free tier allows 1000 searches per month.
+
+### Error: Gemini 429 quota exceeded in UI
+Solution: Gemini free tier resets every 24 hours.
+PDF reading still works via PDF.js even when Gemini quota is exhausted.
+Only the enriched prompt building and conclusion are affected.
+
+### Error: Docker build fails
+Solution: Make sure all API keys are set as environment variables
+before running docker run. Use --env-file .env flag.
+
+### Error: openenv validate shows issues
+Solution: Run pip install openenv-core first.
+Make sure server/init.py exists.
+Make sure pyproject.toml has [project.scripts] server = "server.app:main"
+
+### Server starts but /ui returns 404
+Solution: Make sure ui.html exists in the root directory.
+Run from the DecisionSimEnv folder not a subdirectory.
 
 ---
 
