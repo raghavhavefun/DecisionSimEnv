@@ -1,0 +1,8 @@
+{
+  "id": "20260402_170159",
+  "timestamp": "2026-04-02T17:01:59.147491",
+  "user_input": "I am Arjun Mehta, 27 years old, living in Pune. I have been working \nas a product analyst at a mid-size fintech for 3 years, earning \nRs 11L per year. I have been building a B2B SaaS startup called \nRestockIQ on the side for 8 months \u2014 it helps restaurants manage \ninventory using AI predictions. I have 2 LOIs signed and 3 more \nrestaurants interested. I have Rs 4L in savings. Groww just offered \nme a Product Manager role at Rs 18L CTC. My parents want me to take \nthe safe job. Should I quit my job and go full time on RestockIQ or \ntake the Groww offer?",
+  "task1_output": "[Goal & Context Extraction]\n\n\n---\n\n[Weakness Analysis]\n",
+  "task2_output": "[Scenario Mapping]\n\n\n---\n\n[Probability & Impact Analysis]\n",
+  "task3_output": "[Timeline Simulation]\n\n\n---\n\n[Stress Testing]\n\n\n---\n\n[Final Verdict]\n"
+}
