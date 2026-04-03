@@ -50,15 +50,18 @@ def root():
 @app.post("/reset")
 async def reset(request: Request):
     try:
-        # Try to parse body, use defaults if empty or missing
+        body = {}
         try:
-            body = await request.json()
+            raw = await request.body()
+            if raw:
+                import json
+                body = json.loads(raw)
         except Exception:
             body = {}
 
-        task_id = body.get("task_id", "task1_autopsy") if body else "task1_autopsy"
-        user_input = body.get("user_input", "Default test case for environment validation") if body else "Default test case for environment validation"
-        domain = body.get("domain", "business") if body else "business"
+        task_id = str(body.get("task_id", "task1_autopsy")) if body else "task1_autopsy"
+        user_input = str(body.get("user_input", "Default test case for environment validation")) if body else "Default test case for environment validation"
+        domain = str(body.get("domain", "business")) if body else "business"
 
         obs = env.reset(task_id=task_id, user_input=user_input, domain=domain)
         return obs.model_dump()
@@ -80,9 +83,20 @@ def reset_get():
 
 
 @app.post("/step")
-async def step(req: StepRequest):
+async def step(request: Request):
     try:
-        analysis = req.analysis
+        body = {}
+        try:
+            raw = await request.body()
+            if raw:
+                import json
+                body = json.loads(raw)
+        except Exception:
+            body = {}
+
+        analysis = str(body.get("analysis", "AUTO")) if body else "AUTO"
+        chosen_path = body.get("chosen_path", None) if body else None
+
         if analysis == "AUTO":
             s = env._state
             if s is None:
@@ -108,7 +122,7 @@ async def step(req: StepRequest):
             )
             analysis = await asyncio.to_thread(_call_llm, instructions)
 
-        action = Action(analysis=analysis, chosen_path=req.chosen_path)
+        action = Action(analysis=analysis, chosen_path=chosen_path)
         result = await asyncio.to_thread(env.step, action)
         return {
             "observation": result.observation.model_dump(),
