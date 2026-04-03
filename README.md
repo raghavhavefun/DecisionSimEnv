@@ -216,6 +216,78 @@ curl -X POST https://ragarwal023-decisionsimenv.hf.space/step \
 
 ---
 
+## Backend Architecture
+
+### environment.py — Core Environment
+The main environment class DecisionSimEnv implements the OpenEnv interface.
+
+**reset(task_id, user_input, domain)** — Initializes a new episode. Fetches real web data from 5 APIs before the first step. Returns an Observation with instructions for the AI agent.
+
+**step(action)** — Receives the AI agent's analysis, grades it using the step-specific grader, returns a Reward with score 0.0 to 1.0. Automatically calls the LLM when analysis is set to AUTO.
+
+**state()** — Returns the current episode state including step number, scores so far, goal profile, and whether the episode is complete.
+
+**_build_web_context()** — Fetches real data from Tavily, NewsAPI, Alpha Vantage, World Bank, and Hacker News before each episode. This real world data is injected into every step instruction so the AI uses real competitors, real market data, and real news in its analysis.
+
+**_call_llm()** — Calls Groq llama-3.3-70b-versatile via OpenAI client. Uses API_BASE_URL and MODEL_NAME from environment variables so judges can swap any model.
+
+**_extract_goal_profile()** — After Task 1 Step 1, extracts a structured goal profile from the AI output as JSON. This profile is passed to all subsequent steps so the AI always knows what the user actually wants.
+
+### graders.py — Step-Specific Graders
+Each of the 7 steps has its own grader function. Graders never coach the AI — they score what the AI independently produces.
+
+| Grader | Checks For |
+|--------|-----------|
+| score_task1_step1 | Goal profile extraction, weakness analysis, real named companies, failure analysis, blind spot |
+| score_task1_step2 | Pros table, cons table, confidence levels, severity scores, critical question |
+| score_task2_step1 | 6 scenarios, Bayesian reasoning, probabilities sum to 100%, elasticity, scenario coverage |
+| score_task2_step2 | Ranking table, regret scores, reversibility, survival probability, chosen scenario |
+| score_task3_step1 | 8+ months covered, V(t) and dV/dt language, explicit calculations, elasticity check |
+| score_task3_step2 | Alignment score out of 10, gap analysis, path comparison table, ALIGNED verdict |
+| score_task3_step3 | PROCEED or DO NOT PROCEED or PIVOT TO verdict, action plan, milestones, kill factor |
+
+All graders return a score between 0.0 and 1.0 plus a breakdown dict and feedback string.
+
+### math_graders.py — Mathematical Scoring
+Runs alongside keyword graders. Checks if the AI actually used real mathematics in its output.
+
+| Function | Formula Checked |
+|----------|----------------|
+| score_bayesian | P(A given B) = P(B given A) x P(A) / P(B) — base rate reasoning |
+| score_entropy | H = -sum(p x log p) — Shannon entropy of scenario probabilities |
+| score_derivative | dV/dt = r(t) x V(t) — differential equation language |
+| score_elasticity | E = (dOutput/Output) / (dInput/Input) — fragility check |
+| score_regret | Regret = max(outcomes) minus outcome(i) — regret minimization |
+
+Math score contributes 30-40% of each step's final score. The remaining 60-70% is keyword matching.
+
+---
+
+## UI Architecture
+
+### ui.html — Browser Interface
+Single file browser application. No framework. Pure HTML, CSS, JavaScript.
+
+**PDF Reading — PDF.js (Mozilla)**
+PDFs are read entirely in the browser using PDF.js loaded from CDN. Every page is extracted as text. No API calls needed. No quota. Works offline. The extracted text is included in the prompt sent to Gemini.
+
+**Image Reading — Gemini VLM**
+Images are sent to Gemini 2.0 Flash as base64 inline data. Gemini describes every detail visible in the image — all text, numbers, conversations, patterns. This description is included in the enriched prompt.
+
+**Prompt Building — Gemini 2.0 Flash**
+After extracting all file content, everything is sent to Gemini 2.0 Flash with a detailed instruction to write one massive enriched prompt in first person. Gemini adds market context, comparable cases, and what the numbers actually mean. The enriched prompt is what gets sent to the 3 tasks.
+
+**Groq Rate Limit Fallback**
+When Groq hits its daily token limit, the UI catches the error and automatically calls Gemini 2.0 Flash directly. Gemini generates the step analysis. The result is sent back to the backend grader which scores it normally. The user sees which steps used Gemini instead of Groq.
+
+**Conclusion Paragraph — Gemini 2.0 Flash**
+After all 3 tasks complete, Gemini writes one conclusive paragraph starting with DO THIS or DO NOT DO THIS or INSTEAD DO THIS. References specific findings from all 3 tasks. Ends with one concrete action for the next 7 days.
+
+**Run History**
+Last 20 runs are saved — both locally in browser localStorage and on the server via /save_run endpoint. Clicking any history item reloads the full analysis.
+
+---
+
 ## OpenEnv Spec Compliance
 
 | Requirement | Status |
